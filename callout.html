@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ミッシング コールアウト</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f1a26;
+    color: #c8d8e8;
+    font-family: 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 24px;
+    padding: 32px 16px;
+  }
+  h1 { font-size: 1.2rem; color: #7aa8d4; letter-spacing: 0.05em; }
+
+  .timer {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #ffffaa;
+    letter-spacing: 0.05em;
+    min-width: 120px;
+    text-align: center;
+  }
+  .timer.negative { color: #88aacc; }
+
+  .callout-box {
+    font-size: 1.4rem;
+    color: #fff;
+    background: #1a2d42;
+    border: 1px solid #3a5a7a;
+    border-radius: 8px;
+    padding: 16px 32px;
+    min-height: 60px;
+    text-align: center;
+    min-width: 320px;
+    transition: background 0.2s;
+  }
+  .callout-box.active {
+    background: #1e3d5a;
+    border-color: #5b91ff;
+    color: #ffffaa;
+  }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .tl-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #7a9ab4;
+    background: #131f2e;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .tl-item.upcoming { color: #c8d8e8; border-color: #2a4a6a; }
+  .tl-item.active   { color: #ffffaa; border-color: #5b91ff; background: #1e3d5a; font-weight: bold; }
+  .tl-item.past     { opacity: 0.35; }
+  .tl-time { min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  .controls { display: flex; gap: 12px; align-items: stretch; }
+  .start-group { display: flex; flex-direction: column; gap: 6px; }
+  .seek-btns { display: flex; gap: 6px; }
+  .sub-btns { display: flex; flex-direction: column; gap: 6px; }
+  button {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  #btnStart  { background: #3a7acd; color: #fff; font-size: 1.1rem; padding: 16px 28px; }
+  #btnStop   { background: #5a3a3a; color: #ddd; flex: 1; }
+  #btnReset  { background: #2a3a4a; color: #aaa; flex: 1; }
+  #btnAdv, #btnRew {
+    background: #1e3428;
+    color: #aad4aa;
+    padding: 8px 0;
+    font-size: 1.2rem;
+    flex: 1;
+  }
+
+  .mode-toggle {
+    display: flex;
+    background: #131f2e;
+    border: 1px solid #2a4a6a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mode-toggle button {
+    padding: 8px 20px;
+    border-radius: 0;
+    font-size: 0.9rem;
+    background: transparent;
+    color: #5a7a9a;
+    border: none;
+  }
+  .mode-toggle button.selected {
+    background: #1e3d5a;
+    color: #ffffaa;
+  }
+
+  .live-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #7a9ab4;
+  }
+  .live-options.hidden { visibility: hidden; }
+  .live-options select {
+    background: #131f2e;
+    color: #c8d8e8;
+    border: 1px solid #2a4a6a;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .note { font-size: 0.78rem; color: #5a7a9a; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>ケフカ ミッシング コールアウト</h1>
+
+<div class="mode-toggle">
+  <button id="btnTest">🧪 テストモード</button>
+  <button id="btnLive" class="selected">🔴 本番モード</button>
+</div>
+
+<div class="timer" id="timer">0:00</div>
+<div class="callout-box" id="callout">—</div>
+
+<div class="live-options hidden" id="liveOptions">
+  <label>カウントダウン</label>
+  <select id="countdownSec"></select>
+</div>
+
+<div class="controls">
+  <div class="start-group">
+    <button id="btnStart">▶ 開始</button>
+    <div class="seek-btns">
+      <button id="btnRew">&lt;&lt;</button>
+      <button id="btnAdv">&gt;&gt;</button>
+    </div>
+  </div>
+  <div class="sub-btns">
+    <button id="btnStop">⏸ 一時停止</button>
+    <button id="btnReset">↺ リセット</button>
+  </div>
+</div>
+
+<div class="timeline" id="timeline"></div>
+
+<p class="note">※ ブラウザの音声合成を使用。開始前に音量を確認してください。</p>
+
+<script>
+// 塔着弾タイム（秒）
+const TOWER_TIMES = [13, 23, 33, 43, 53, 63, 73, 83];
+
+// コールアウトイベント（固定タイムライン）
+const EVENTS = [
+  { at:   0, label: 'ミッシング開始' },
+  { at:   4, label: '1回目' },
+  { at:  15, label: '2回目' },
+  { at:  17, label: '過去・未来みる' },
+  { at:  23, label: '誘導' },
+  { at:  29, label: '3回目' },
+  { at:  32, label: 'つぎチェンジ。4回目。マーカーつける' },
+  { at:  38, label: '過去・未来みる。' },
+  { at:  44, label: '誘導' },
+  { at:  50, label: '5回目' },
+  { at:  56, label: '6回目' },
+  { at:  59, label: '過去・未来みる' },
+  { at:  65, label: '誘導' },
+  { at:  71, label: '7回目' },
+  { at:  74, label: 'つぎチェンジ。8回目。終わったらアルファ集合' },
+  { at:  78, label: '過去未来みる' },
+  { at:  85, label: 'アルファ集合。未来なら移動。過去ならそのまま' },
+  { at:  92, label: '未来移動' },
+].map((ev, i) => ({ ...ev, id: i }));
+
+// タイムライン表示用アイテム
+const DISPLAY_ITEMS = [
+  { at: 0,  label: 'ミッシング / 塔出現' },
+  ...TOWER_TIMES.map((t, i) => ({ at: t, label: `塔${i + 1}回目 着弾` })),
+  { at: 100, label: '終了' },
+];
+
+// UI構築
+const timerEl   = document.getElementById('timer');
+const calloutEl = document.getElementById('callout');
+const tlEl      = document.getElementById('timeline');
+
+DISPLAY_ITEMS.forEach((item, idx) => {
+  const div = document.createElement('div');
+  div.className = 'tl-item';
+  div.dataset.idx = idx;
+  div.dataset.at  = item.at;
+  div.innerHTML = `<span class="tl-time">${item.at}s</span><span>${item.label}</span>`;
+  tlEl.appendChild(div);
+});
+
+// 音声
+const synth = window.speechSynthesis;
+const speechQueue = [];
+let isSpeaking = false;
+
+function speak(text) {
+  speechQueue.push(text);
+  if (!isSpeaking) flushQueue();
+}
+
+function flushQueue() {
+  if (speechQueue.length === 0) { isSpeaking = false; return; }
+  isSpeaking = true;
+  const utt = new SpeechSynthesisUtterance(speechQueue.shift());
+  utt.lang = 'ja-JP';
+  utt.rate = 1.0;
+  utt.pitch = 1.0;
+  utt.onend = () => flushQueue();
+  synth.speak(utt);
+}
+
+function cancelSpeech() {
+  speechQueue.length = 0;
+  isSpeaking = false;
+  synth.cancel();
+}
+
+const PRE_OFFSET = 235; // カウントダウン後〜0sまでの待機秒数（3分55秒）
+
+// カウントダウン秒プルダウン生成（1〜21秒）
+const countdownSelEl = document.getElementById('countdownSec');
+for (let n = 1; n <= 21; n++) {
+  const opt = document.createElement('option');
+  opt.value = n;
+  opt.textContent = `${n}秒`;
+  if (n === 5) opt.selected = true;
+  countdownSelEl.appendChild(opt);
+}
+function getCountdownSec() { return parseInt(countdownSelEl.value, 10); }
+countdownSelEl.addEventListener('change', () => { if (!running) resetState(); });
+
+// モード
+let liveMode = true;
+const liveOptionsEl = document.getElementById('liveOptions');
+function updateModeUI() {
+  liveOptionsEl.classList.toggle('hidden', !liveMode);
+}
+updateModeUI();
+function getStartElapsed() { return liveMode ? -(getCountdownSec() + PRE_OFFSET) : 0; }
+
+document.getElementById('btnTest').addEventListener('click', () => {
+  if (running) return;
+  liveMode = false;
+  document.getElementById('btnTest').classList.add('selected');
+  document.getElementById('btnLive').classList.remove('selected');
+  updateModeUI();
+  resetState();
+});
+document.getElementById('btnLive').addEventListener('click', () => {
+  if (running) return;
+  liveMode = true;
+  document.getElementById('btnLive').classList.add('selected');
+  document.getElementById('btnTest').classList.remove('selected');
+  updateModeUI();
+  resetState();
+});
+
+// 状態
+let elapsed   = getStartElapsed();
+let lastTs    = null;
+let rafId     = null;
+let running   = false;
+let spokenSet = new Set();
+let currentCallout = '';
+
+function formatTime(sec) {
+  const s = Math.floor(Math.abs(sec));
+  const sign = sec < 0 ? '-' : '';
+  return `${sign}${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function updateUI() {
+  // フェーズ別表示
+  if (elapsed < -PRE_OFFSET) {
+    // カウントダウンフェーズ（5,4,3,2,1）
+    timerEl.textContent = Math.ceil(-elapsed - PRE_OFFSET);
+    timerEl.className = 'timer negative';
+  } else if (elapsed < 0) {
+    // 待機フェーズ（ミッシング開始まで残り時間）
+    const rem = Math.ceil(-elapsed);
+    const m = Math.floor(rem / 60);
+    const s = String(rem % 60).padStart(2, '0');
+    timerEl.textContent = `${m}:${s}`;
+    timerEl.className = 'timer negative';
+  } else {
+    timerEl.textContent = formatTime(elapsed);
+    timerEl.className = 'timer';
+  }
+
+  // コールアウトボックス
+  calloutEl.textContent = currentCallout || '—';
+  calloutEl.className = 'callout-box' + (currentCallout ? ' active' : '');
+
+  // タイムラインハイライト
+  const items = tlEl.querySelectorAll('.tl-item');
+  items.forEach((el, idx) => {
+    const at = DISPLAY_ITEMS[idx].at;
+    const nextAt = DISPLAY_ITEMS[idx + 1]?.at ?? Infinity;
+    el.className = 'tl-item' +
+      (elapsed >= nextAt ? ' past' :
+       elapsed >= at     ? ' active' :
+       elapsed >= at - 10 ? ' upcoming' : '');
+  });
+}
+
+function tick(ts) {
+  if (lastTs !== null) {
+    elapsed += (ts - lastTs) / 1000;
+  }
+  lastTs = ts;
+
+  // コールアウト発火
+  for (const ev of EVENTS) {
+    if (!spokenSet.has(ev.id) && elapsed >= ev.at) {
+      spokenSet.add(ev.id);
+      currentCallout = ev.label;
+      speak(ev.label);
+      // 5秒後にボックスをクリア
+      setTimeout(() => {
+        if (currentCallout === ev.label) {
+          currentCallout = '';
+          updateUI();
+        }
+      }, 5000);
+    }
+  }
+
+  // 終了
+  if (elapsed >= 100) {
+    running = false;
+    currentCallout = '';
+    updateUI();
+    return;
+  }
+
+  updateUI();
+  if (running) rafId = requestAnimationFrame(tick);
+}
+
+function resetState() {
+  running = false;
+  elapsed = getStartElapsed();
+  lastTs  = null;
+  spokenSet.clear();
+  currentCallout = '';
+  cancelSpeech();
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  updateUI();
+}
+
+document.getElementById('btnStart').addEventListener('click', () => {
+  if (running) return;
+  if (elapsed >= 90) resetState();
+  running = true;
+  lastTs  = null;
+  rafId   = requestAnimationFrame(tick);
+});
+
+document.getElementById('btnStop').addEventListener('click', () => {
+  running = false;
+  lastTs  = null;
+  cancelSpeech();
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  updateUI();
+});
+
+function holdButton(btnId, delta) {
+  const btn = document.getElementById(btnId);
+  let interval = null;
+  const start = () => {
+    elapsed += delta * 0.5;
+    updateUI();
+    interval = setInterval(() => { elapsed += delta; updateUI(); }, 150);
+  };
+  const stop = () => { clearInterval(interval); interval = null; };
+  btn.addEventListener('mousedown',   start);
+  btn.addEventListener('touchstart',  start, { passive: true });
+  btn.addEventListener('mouseup',     stop);
+  btn.addEventListener('mouseleave',  stop);
+  btn.addEventListener('touchend',    stop);
+  btn.addEventListener('touchcancel', stop);
+}
+holdButton('btnAdv', +1);
+holdButton('btnRew', -1);
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  resetState();
+  lastTs  = null;
+  spokenSet.clear();
+  currentCallout = '';
+  cancelSpeech();
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  updateUI();
+});
+
+updateUI();
+</script>
+</body>
+</html>
