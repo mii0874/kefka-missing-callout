@@ -6,6 +6,9 @@
 <title>ミッシング コールアウト v2</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+  }
   body {
     background: #0f1a26;
     color: #c8d8e8;
@@ -13,110 +16,78 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
-    gap: 20px;
-    padding: 28px 16px;
+    gap: 10px;
+    padding: 12px 16px 8px;
   }
-  h1 { font-size: 1.2rem; color: #7aa8d4; letter-spacing: 0.05em; }
+  h1 { font-size: 1.0rem; color: #7aa8d4; letter-spacing: 0.05em; flex-shrink: 0; }
 
   /* タイマー */
   .timer {
-    font-size: 4rem;
+    font-size: 3rem;
     font-weight: bold;
     color: #ffffaa;
     letter-spacing: 0.05em;
     text-align: center;
-    min-width: 120px;
+    min-width: 100px;
+    flex-shrink: 0;
+    line-height: 1;
   }
   .timer.negative { color: #88aacc; }
 
   /* コールアウトボックス */
   .callout-box {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     color: #fff;
     background: #1a2d42;
     border: 1px solid #3a5a7a;
     border-radius: 8px;
-    padding: 14px 32px;
-    min-height: 56px;
+    padding: 10px 24px;
+    min-height: 46px;
     text-align: center;
-    min-width: 320px;
+    min-width: 300px;
     transition: background 0.2s;
+    flex-shrink: 0;
   }
   .callout-box.active { background: #1e3d5a; border-color: #5b91ff; color: #ffffaa; }
 
-  /* モードトグル */
-  .mode-toggle {
-    display: flex;
-    background: #131f2e;
-    border: 1px solid #2a4a6a;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  .mode-toggle button {
-    padding: 8px 20px;
-    border-radius: 0;
-    font-size: 0.9rem;
-    background: transparent;
-    color: #5a7a9a;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  .mode-toggle button.selected { background: #1e3d5a; color: #ffffaa; }
-
-  /* ライブオプション */
-  .live-options {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.9rem;
-    color: #7a9ab4;
-  }
-  .live-options.hidden { visibility: hidden; }
-  .live-options select {
-    background: #131f2e;
-    color: #c8d8e8;
-    border: 1px solid #2a4a6a;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-
   /* コントロール */
-  .controls { display: flex; gap: 12px; align-items: stretch; }
-  .start-group { display: flex; flex-direction: column; gap: 6px; }
-  .seek-btns { display: flex; gap: 6px; }
-  .sub-btns { display: flex; flex-direction: column; gap: 6px; }
+  .controls { display: flex; gap: 8px; align-items: stretch; flex-shrink: 0; }
+  .start-group { display: flex; flex-direction: column; gap: 4px; }
+  .seek-btns { display: flex; gap: 4px; }
+  .sub-btns { display: flex; flex-direction: column; gap: 4px; }
   button {
-    padding: 10px 24px;
+    padding: 8px 20px;
     border: none;
     border-radius: 6px;
-    font-size: 1rem;
+    font-size: 0.95rem;
     cursor: pointer;
     font-weight: bold;
     transition: opacity 0.15s;
   }
   button:hover { opacity: 0.85; }
-  #btnStart { background: #3a7acd; color: #fff; font-size: 1.1rem; padding: 14px 24px; }
+  #btnStart { background: #3a7acd; color: #fff; font-size: 1.05rem; padding: 12px 20px; }
   #btnStop  { background: #5a3a3a; color: #ddd; flex: 1; }
   #btnReset { background: #2a3a4a; color: #aaa; flex: 1; }
   #btnRew, #btnAdv {
     background: #1e3428; color: #aad4aa;
-    padding: 8px 0; font-size: 1.2rem; flex: 1;
+    padding: 6px 0; font-size: 1.1rem; flex: 1;
   }
 
   /* イベントリスト */
   .event-list-wrap {
     width: 100%;
     max-width: 520px;
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
   .list-controls {
     display: flex;
     gap: 8px;
     margin-bottom: 10px;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    flex-shrink: 0;
   }
   .list-controls button {
     padding: 5px 14px;
@@ -125,6 +96,20 @@
     color: #aac8e8;
     border-radius: 6px;
   }
+
+  .event-list-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    background: #111b28;
+    border: 1px solid #2a4a6a;
+    border-radius: 8px;
+    padding: 8px 10px 8px 8px;
+  }
+  .event-list-scroll::-webkit-scrollbar { width: 16px; }
+  .event-list-scroll::-webkit-scrollbar-track { background: #0d1620; border-radius: 0 8px 8px 0; }
+  .event-list-scroll::-webkit-scrollbar-thumb { background: #3a6a9a; border-radius: 8px; border: 3px solid #0d1620; }
+  .event-list-scroll::-webkit-scrollbar-thumb:hover { background: #5a9acd; }
 
   .phase-block { margin-bottom: 10px; }
   .section-block { margin-left: 16px; margin-top: 4px; }
@@ -144,6 +129,8 @@
   .row.section-row { font-weight: bold; color: #a8c8e8; font-size: 0.88rem; }
   .row.event-row  { color: #c8d8e8; font-size: 0.85rem; }
   .row.event-row.fired { opacity: 0.35; }
+  .row.event-row.has-star { color: #f0c060; }
+  .row.event-row.has-star.fired { opacity: 0.35; }
 
   .row input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #5b91ff; flex-shrink: 0; }
   .at-label {
@@ -151,15 +138,64 @@
     font-variant-numeric: tabular-nums; cursor: pointer; text-decoration: underline dotted;
   }
   .at-label:hover { color: #aad4ff; }
-  .jump-btn {
-    font-size: 0.72rem; padding: 2px 7px; background: #1e3428;
-    color: #aad4aa; border: none; border-radius: 4px; cursor: pointer;
-    font-weight: bold; margin-left: 4px;
+
+  /* カウントダウン設定 */
+  .countdown-options {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #7a9ab4;
+    flex-shrink: 0;
   }
-  .jump-btn:hover { background: #2a5a3a; }
+  .countdown-options select {
+    background: #131f2e;
+    color: #c8d8e8;
+    border: 1px solid #2a4a6a;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
 
-  .note { font-size: 0.78rem; color: #5a7a9a; text-align: center; }
+  /* 自動スクロールトグル */
+  #btnAutoScroll {
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    background: #1a3a2a;
+    color: #aad4aa;
+    border-radius: 5px;
+  }
+  #btnAutoScroll.off {
+    background: #2a2a3a;
+    color: #7a8a9a;
+  }
 
+  .note { font-size: 0.78rem; color: #5a7a9a; text-align: center; flex-shrink: 0; }
+
+  /* 時間記録トグルボタン */
+  .record-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4a3a7a;
+    color: #d8c8ff;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    z-index: 99;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .record-toggle-btn:hover { opacity: 0.85; }
+
+  /* 時間記録パネル */
   .record-float {
     position: fixed;
     right: 20px;
@@ -225,12 +261,7 @@
 
 <h1>ケフカ ミッシング コールアウト v2</h1>
 
-<div class="mode-toggle">
-  <button id="btnTest">🧪 テストモード</button>
-  <button id="btnLive" class="selected">🔴 本番モード</button>
-</div>
-
-<div class="live-options" id="liveOptions">
+<div class="countdown-options">
   <label>カウントダウン</label>
   <select id="countdownSec"></select>
 </div>
@@ -256,11 +287,15 @@
   <div class="list-controls">
     <button id="btnAllCheck">全てチェック</button>
     <button id="btnAllClear">全てクリア</button>
+    <button id="btnAutoScroll">自動スクロール ON</button>
   </div>
-  <div id="eventList"></div>
+  <div class="event-list-scroll" id="eventList"></div>
 </div>
 
-<div class="record-float" id="recordFloat">
+<p class="note">※ ブラウザの音声合成を使用。開始前に音量を確認してください。</p>
+
+<!-- 時間記録パネル（デフォルト非表示） -->
+<div class="record-float hidden" id="recordFloat">
   <div class="record-float-header">
     <label>時間記録</label>
     <button id="btnRecordClose">×</button>
@@ -270,7 +305,8 @@
   <button id="btnRecordClear">クリア</button>
 </div>
 
-<p class="note">※ ブラウザの音声合成を使用。開始前に音量を確認してください。</p>
+<!-- 記録パネル表示ボタン -->
+<button class="record-toggle-btn" id="btnRecordToggle" title="時間記録">⏺</button>
 
 <script>
 // =====================
@@ -300,7 +336,7 @@ const STRUCTURE = [
       {
         label: 'ミッシング', at: 235,
         events: [
-          { at: 235.0,   label: 'ミッシング開始' },
+          { at: 235.0,   label: 'ミッシング開始★' },
           { at: 239.0,   label: '1回目' },
           { at: 249.5,   label: '2回目' },
           { at: 252.0,   label: '過去・未来みる' },
@@ -332,7 +368,7 @@ const STRUCTURE = [
         label: '開幕', at: 434,
         events: [
           { at: 426.0,  label: '左右別れる' },
-          { at: 430.2,  label: '決戦' },
+          { at: 430.2,  label: '決戦★' },
           { at: 485.8,  label: 'たてよこ安置みる' },
           { at: 498.0,  label: 'デバフみておく' },
           { at: 502.3,  label: 'ケフカ位置注意' },
@@ -473,7 +509,6 @@ STRUCTURE.forEach((phase, pi) => {
 // =====================
 const LS_KEY = 'callout2.unchecked';
 
-// 現在の構造に存在するIDセット
 const validIds = new Set();
 STRUCTURE.forEach(p => {
   validIds.add(p.id);
@@ -483,17 +518,13 @@ STRUCTURE.forEach(p => {
   });
 });
 
-// ロード時に存在しないIDは破棄
 const saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
 let uncheckedIds = new Set(saved.filter(id => validIds.has(id)));
 
 function saveLS() {
   localStorage.setItem(LS_KEY, JSON.stringify([...uncheckedIds]));
 }
-
-function isChecked(id) {
-  return !uncheckedIds.has(id);
-}
+function isChecked(id) { return !uncheckedIds.has(id); }
 
 // =====================
 // フラットイベントリスト
@@ -515,7 +546,7 @@ function recompileActive() {
   activeEvents = allEvents()
     .filter(ev => isChecked(ev.id))
     .sort((a, b) => a.at - b.at)
-    .map(ev => ({ ...ev })); // コピー
+    .map(ev => ({ ...ev }));
 }
 recompileActive();
 
@@ -530,7 +561,6 @@ function buildList() {
     const phaseBlock = document.createElement('div');
     phaseBlock.className = 'phase-block';
 
-    // Phase行
     const phaseRow = makeRow('phase-row', phase.id, phase.label, null, null);
     phaseBlock.appendChild(phaseRow);
 
@@ -539,7 +569,8 @@ function buildList() {
       secBlock.className = 'section-block';
 
       if (sec.label) {
-        const secRow = makeRow('section-row', sec.id, sec.label, null, null);
+        const jumpAt = sec.at ?? null;
+        const secRow = makeRow('section-row', sec.id, sec.label, null, jumpAt);
         secBlock.appendChild(secRow);
       }
 
@@ -559,7 +590,6 @@ function buildList() {
 }
 
 function jumpTo(sec) {
-  // 停止してからジャンプ・スタート
   running = false;
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   cancelSpeech();
@@ -568,7 +598,6 @@ function jumpTo(sec) {
   spokenSet = new Set(activeEvents.filter(e => e.at < sec).map(e => e.id));
   currentCallout = '';
   updateUI();
-  // スタート
   running = true;
   rafId = requestAnimationFrame(tick);
 }
@@ -582,6 +611,9 @@ function makeRow(cls, id, label, at, jumpAt = null) {
   cb.type = 'checkbox';
   cb.dataset.id = id;
   cb.checked = isChecked(id);
+
+  const hasStar = label.includes('★');
+  if (cls === 'event-row' && hasStar) row.classList.add('has-star');
 
   const labelEl = document.createElement('span');
   labelEl.textContent = label;
@@ -599,19 +631,15 @@ function makeRow(cls, id, label, at, jumpAt = null) {
 
   row.appendChild(labelEl);
 
-  if (jumpAt !== null) {
-    const jBtn = document.createElement('button');
-    jBtn.className = 'jump-btn';
-    jBtn.textContent = `▶${jumpAt}sから`;
-    jBtn.title = `${jumpAt}sへジャンプ`;
-    jBtn.addEventListener('click', (e) => { e.stopPropagation(); jumpTo(jumpAt); });
-    row.appendChild(jBtn);
-  }
 
   row.addEventListener('click', (e) => {
-    if (e.target === cb) return; // チェックボックス直クリックはイベント伝播で処理
-    cb.checked = !cb.checked;
-    onCheckChange(id, cb.checked, cls);
+    if (e.target === cb) return;
+    if (cls === 'event-row' && at !== null) {
+      jumpTo(at);
+    } else {
+      cb.checked = !cb.checked;
+      onCheckChange(id, cb.checked, cls);
+    }
   });
   cb.addEventListener('change', () => onCheckChange(id, cb.checked, cls));
 
@@ -620,7 +648,6 @@ function makeRow(cls, id, label, at, jumpAt = null) {
 
 function onCheckChange(id, checked, cls) {
   if (cls === 'phase-row') {
-    // phase配下の全section・event
     const phase = STRUCTURE.find(p => p.id === id);
     if (!phase) return;
     setPhaseCheck(phase, checked);
@@ -640,23 +667,19 @@ function setPhaseCheck(phase, checked) {
   if (checked) uncheckedIds.delete(phase.id); else uncheckedIds.add(phase.id);
   for (const sec of phase.sections) setSectionCheck(sec, checked);
 }
-
 function setSectionCheck(sec, checked) {
   if (checked) uncheckedIds.delete(sec.id); else uncheckedIds.add(sec.id);
   for (const ev of sec.events) setEventCheck(ev.id, checked);
 }
-
 function setEventCheck(id, checked) {
   if (checked) uncheckedIds.delete(id); else uncheckedIds.add(id);
 }
-
 function findSection(secId) {
   for (const phase of STRUCTURE)
     for (const sec of phase.sections)
       if (sec.id === secId) return { phase, sec };
   return {};
 }
-
 function refreshCheckboxUI() {
   listEl.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.checked = isChecked(cb.dataset.id);
@@ -665,7 +688,6 @@ function refreshCheckboxUI() {
 
 buildList();
 
-// 全チェック・全クリア
 document.getElementById('btnAllCheck').addEventListener('click', () => {
   uncheckedIds.clear();
   refreshCheckboxUI();
@@ -693,7 +715,7 @@ const speechQueue = [];
 let isSpeaking = false;
 
 function speak(text) {
-  speechQueue.push(text);
+  speechQueue.push(text.replace(/★/g, ''));
   if (!isSpeaking) flushQueue();
 }
 function flushQueue() {
@@ -714,62 +736,76 @@ function cancelSpeech() {
 // =====================
 // カウントダウン設定
 // =====================
+const LS_COUNTDOWN = 'callout2.countdownSec';
 const countdownSelEl = document.getElementById('countdownSec');
+const savedCd = parseInt(localStorage.getItem(LS_COUNTDOWN) || '5', 10);
 for (let n = 1; n <= 21; n++) {
   const opt = document.createElement('option');
   opt.value = n;
   opt.textContent = `${n}秒`;
-  if (n === 5) opt.selected = true;
+  if (n === savedCd) opt.selected = true;
   countdownSelEl.appendChild(opt);
 }
 function getCountdownSec() { return parseInt(countdownSelEl.value, 10); }
-countdownSelEl.addEventListener('change', () => { if (!running) resetState(); });
-
-// =====================
-// モード
-// =====================
-let liveMode = true;
-const liveOptionsEl = document.getElementById('liveOptions');
-function updateModeUI() {
-  liveOptionsEl.classList.toggle('hidden', !liveMode);
-}
-updateModeUI();
-function getStartElapsed() { return liveMode ? -getCountdownSec() : 0; }
-
-document.getElementById('btnTest').addEventListener('click', () => {
-  if (running) return;
-  liveMode = false;
-  document.getElementById('btnTest').classList.add('selected');
-  document.getElementById('btnLive').classList.remove('selected');
-  updateModeUI();
-  resetState();
-});
-document.getElementById('btnLive').addEventListener('click', () => {
-  if (running) return;
-  liveMode = true;
-  document.getElementById('btnLive').classList.add('selected');
-  document.getElementById('btnTest').classList.remove('selected');
-  updateModeUI();
-  resetState();
+countdownSelEl.addEventListener('change', () => {
+  localStorage.setItem(LS_COUNTDOWN, countdownSelEl.value);
+  if (!running) resetState();
 });
 
 // =====================
 // タイマー状態
 // =====================
-let elapsed   = getStartElapsed();
+let elapsed   = -getCountdownSec();
 let lastTs    = null;
 let rafId     = null;
 let running   = false;
-let spokenSet = new Set(); // 発火済みイベントid
+let spokenSet = new Set();
 let currentCallout = '';
 
 function formatTime(sec) {
   const s = Math.floor(Math.abs(sec));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  const sign = sec < 0 ? '-' : '';
+  return `${sign}${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
 const timerEl   = document.getElementById('timer');
 const calloutEl = document.getElementById('callout');
+
+let lastScrolledRow = null;
+let autoScroll = true;
+
+document.getElementById('btnAutoScroll').addEventListener('click', () => {
+  autoScroll = !autoScroll;
+  const btn = document.getElementById('btnAutoScroll');
+  btn.textContent = autoScroll ? '自動スクロール ON' : '自動スクロール OFF';
+  btn.classList.toggle('off', !autoScroll);
+});
+
+// イージング付きスクロール
+let scrollAnimId = null;
+function smoothScrollInList(target) {
+  const container = listEl;
+  const containerRect = container.getBoundingClientRect();
+  const itemRect = target.getBoundingClientRect();
+  const offset = itemRect.top - containerRect.top - 40;
+  if (Math.abs(offset) < 8) return;
+
+  const startTop = container.scrollTop;
+  const endTop = startTop + offset;
+  const duration = 500;
+  const startTime = performance.now();
+
+  if (scrollAnimId) cancelAnimationFrame(scrollAnimId);
+  function step(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    // ease in-out cubic
+    const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    container.scrollTop = startTop + (endTop - startTop) * ease;
+    if (t < 1) scrollAnimId = requestAnimationFrame(step);
+    else scrollAnimId = null;
+  }
+  scrollAnimId = requestAnimationFrame(step);
+}
 
 function updateUI() {
   if (elapsed < 0) {
@@ -784,7 +820,9 @@ function updateUI() {
   updateFiredUI();
 }
 
+
 function updateFiredUI() {
+  let firstUpcoming = null;
   listEl.querySelectorAll('.event-row').forEach(row => {
     const id = row.dataset.id;
     const ev = allEvents().find(e => e.id === id);
@@ -792,15 +830,21 @@ function updateFiredUI() {
       row.classList.add('fired');
     } else {
       row.classList.remove('fired');
+      if (!firstUpcoming) firstUpcoming = row;
     }
   });
+
+  // アクティブ行へ自動スクロール（行が変わったときのみ）
+  if (autoScroll && firstUpcoming && firstUpcoming !== lastScrolledRow) {
+    lastScrolledRow = firstUpcoming;
+    smoothScrollInList(firstUpcoming);
+  }
 }
 
 function tick(ts) {
   if (lastTs !== null) elapsed += (ts - lastTs) / 1000;
   lastTs = ts;
 
-  // 発火チェック（activeEventsはチェック済みのみ）
   for (const ev of activeEvents) {
     if (!spokenSet.has(ev.id) && elapsed >= ev.at) {
       spokenSet.add(ev.id);
@@ -826,18 +870,19 @@ function tick(ts) {
 
 function resetState() {
   running = false;
-  elapsed = getStartElapsed();
+  elapsed = -getCountdownSec();
   lastTs  = null;
   spokenSet.clear();
   currentCallout = '';
+  lastScrolledRow = null;
   cancelSpeech();
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  listEl.scrollTop = 0;
   updateUI();
 }
 
 document.getElementById('btnStart').addEventListener('click', () => {
   if (running) return;
-  if (elapsed >= 9999) resetState();
   running = true;
   lastTs  = null;
   rafId   = requestAnimationFrame(tick);
@@ -851,7 +896,6 @@ document.getElementById('btnStop').addEventListener('click', () => {
 });
 document.getElementById('btnReset').addEventListener('click', resetState);
 
-// << >> ボタン（押しっぱなし対応）
 function holdButton(btnId, delta) {
   const btn = document.getElementById(btnId);
   let interval = null;
@@ -872,7 +916,15 @@ holdButton('btnAdv', +1);
 holdButton('btnRew', -1);
 
 // 時間記録
-const recordArea = document.getElementById('recordArea');
+const recordFloat = document.getElementById('recordFloat');
+const recordArea  = document.getElementById('recordArea');
+
+document.getElementById('btnRecordToggle').addEventListener('click', () => {
+  recordFloat.classList.remove('hidden');
+});
+document.getElementById('btnRecordClose').addEventListener('click', () => {
+  recordFloat.classList.add('hidden');
+});
 document.getElementById('btnRecord').addEventListener('click', () => {
   const t = elapsed.toFixed(1);
   recordArea.value += (recordArea.value ? '\n' : '') + t;
@@ -880,9 +932,6 @@ document.getElementById('btnRecord').addEventListener('click', () => {
 });
 document.getElementById('btnRecordClear').addEventListener('click', () => {
   recordArea.value = '';
-});
-document.getElementById('btnRecordClose').addEventListener('click', () => {
-  document.getElementById('recordFloat').classList.add('hidden');
 });
 
 updateUI();
