@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ミッシング コールアウト v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f1a26;
+    color: #c8d8e8;
+    font-family: 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    gap: 20px;
+    padding: 28px 16px;
+  }
+  h1 { font-size: 1.2rem; color: #7aa8d4; letter-spacing: 0.05em; }
+
+  /* タイマー */
+  .timer {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #ffffaa;
+    letter-spacing: 0.05em;
+    text-align: center;
+    min-width: 120px;
+  }
+  .timer.negative { color: #88aacc; }
+
+  /* コールアウトボックス */
+  .callout-box {
+    font-size: 1.4rem;
+    color: #fff;
+    background: #1a2d42;
+    border: 1px solid #3a5a7a;
+    border-radius: 8px;
+    padding: 14px 32px;
+    min-height: 56px;
+    text-align: center;
+    min-width: 320px;
+    transition: background 0.2s;
+  }
+  .callout-box.active { background: #1e3d5a; border-color: #5b91ff; color: #ffffaa; }
+
+  /* モードトグル */
+  .mode-toggle {
+    display: flex;
+    background: #131f2e;
+    border: 1px solid #2a4a6a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mode-toggle button {
+    padding: 8px 20px;
+    border-radius: 0;
+    font-size: 0.9rem;
+    background: transparent;
+    color: #5a7a9a;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .mode-toggle button.selected { background: #1e3d5a; color: #ffffaa; }
+
+  /* ライブオプション */
+  .live-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #7a9ab4;
+  }
+  .live-options.hidden { visibility: hidden; }
+  .live-options select {
+    background: #131f2e;
+    color: #c8d8e8;
+    border: 1px solid #2a4a6a;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  /* コントロール */
+  .controls { display: flex; gap: 12px; align-items: stretch; }
+  .start-group { display: flex; flex-direction: column; gap: 6px; }
+  .seek-btns { display: flex; gap: 6px; }
+  .sub-btns { display: flex; flex-direction: column; gap: 6px; }
+  button {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  #btnStart { background: #3a7acd; color: #fff; font-size: 1.1rem; padding: 14px 24px; }
+  #btnStop  { background: #5a3a3a; color: #ddd; flex: 1; }
+  #btnReset { background: #2a3a4a; color: #aaa; flex: 1; }
+  #btnRew, #btnAdv {
+    background: #1e3428; color: #aad4aa;
+    padding: 8px 0; font-size: 1.2rem; flex: 1;
+  }
+
+  /* イベントリスト */
+  .event-list-wrap {
+    width: 100%;
+    max-width: 520px;
+  }
+  .list-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    justify-content: flex-end;
+  }
+  .list-controls button {
+    padding: 5px 14px;
+    font-size: 0.82rem;
+    background: #1e3d5a;
+    color: #aac8e8;
+    border-radius: 6px;
+  }
+
+  .phase-block { margin-bottom: 10px; }
+  .section-block { margin-left: 16px; margin-top: 4px; }
+  .event-block { margin-left: 32px; margin-top: 3px; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .row:hover { background: #1a2d42; }
+  .row.phase-row  { font-weight: bold; color: #7aa8d4; font-size: 0.95rem; }
+  .row.section-row { font-weight: bold; color: #a8c8e8; font-size: 0.88rem; }
+  .row.event-row  { color: #c8d8e8; font-size: 0.85rem; }
+  .row.event-row.fired { opacity: 0.35; }
+
+  .row input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #5b91ff; flex-shrink: 0; }
+  .at-label {
+    color: #5a8aaa; font-size: 0.8rem; min-width: 44px; text-align: right;
+    font-variant-numeric: tabular-nums; cursor: pointer; text-decoration: underline dotted;
+  }
+  .at-label:hover { color: #aad4ff; }
+  .jump-btn {
+    font-size: 0.72rem; padding: 2px 7px; background: #1e3428;
+    color: #aad4aa; border: none; border-radius: 4px; cursor: pointer;
+    font-weight: bold; margin-left: 4px;
+  }
+  .jump-btn:hover { background: #2a5a3a; }
+
+  .note { font-size: 0.78rem; color: #5a7a9a; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>ケフカ ミッシング コールアウト v2</h1>
+
+<div class="mode-toggle">
+  <button id="btnTest">🧪 テストモード</button>
+  <button id="btnLive" class="selected">🔴 本番モード</button>
+</div>
+
+<div class="live-options" id="liveOptions">
+  <label>カウントダウン</label>
+  <select id="countdownSec"></select>
+</div>
+
+<div class="timer" id="timer">0:00</div>
+<div class="callout-box" id="callout">—</div>
+
+<div class="controls">
+  <div class="start-group">
+    <button id="btnStart">▶ 開始</button>
+    <div class="seek-btns">
+      <button id="btnRew">&lt;&lt;</button>
+      <button id="btnAdv">&gt;&gt;</button>
+    </div>
+  </div>
+  <div class="sub-btns">
+    <button id="btnStop">⏸ 一時停止</button>
+    <button id="btnReset">↺ リセット</button>
+  </div>
+</div>
+
+<div class="event-list-wrap">
+  <div class="list-controls">
+    <button id="btnAllCheck">全てチェック</button>
+    <button id="btnAllClear">全てクリア</button>
+  </div>
+  <div id="eventList"></div>
+</div>
+
+<p class="note">※ ブラウザの音声合成を使用。開始前に音量を確認してください。</p>
+
+<script>
+// =====================
+// イベント構造定義
+// =====================
+// at = カウントダウン終了からの秒数
+const STRUCTURE = [
+  {
+    label: 'P1',
+    sections: [
+      {
+        label: '',
+        events: [
+          // P1のコールアウトをここに追加
+        ]
+      }
+    ]
+  },
+  {
+    label: 'P2',
+    sections: [
+      {
+        label: '開幕', at: 0,
+        events: [
+          { at: 0, label: '開始' },
+        ]
+      },
+      {
+        label: 'ミッシング',
+        events: [
+          { at: 235, label: 'ミッシング開始' },
+          { at: 239, label: '1回目' },
+          { at: 250, label: '2回目' },
+          { at: 252, label: '過去・未来みる' },
+          { at: 258, label: '誘導' },
+          { at: 264, label: '3回目' },
+          { at: 267, label: 'つぎチェンジ、4回目。マーカーつける' },
+          { at: 273, label: '過去・未来みる' },
+          { at: 279, label: '誘導' },
+          { at: 285, label: '5回目' },
+          { at: 291, label: '6回目' },
+          { at: 294, label: '過去・未来みる' },
+          { at: 300, label: '誘導' },
+          { at: 306, label: '7回目' },
+          { at: 309, label: 'つぎチェンジ、8回目' },
+          { at: 313, label: '終わったらアルファ集合。過去未来みる' },
+          { at: 320, label: 'アルファ集合。未来なら移動。過去ならそのまま' },
+          { at: 327, label: '未来移動' },
+        ]
+      }
+    ]
+  }
+];
+
+// ID自動生成
+STRUCTURE.forEach((phase, pi) => {
+  phase.id = `p${pi}`;
+  phase.sections.forEach((sec, si) => {
+    sec.id = `p${pi}-s${si}`;
+    sec.events.forEach((ev, ei) => {
+      ev.id = `p${pi}-s${si}-e${ei}`;
+    });
+  });
+});
+
+// =====================
+// LocalStorage
+// =====================
+const LS_KEY = 'callout2.unchecked';
+
+// 現在の構造に存在するIDセット
+const validIds = new Set();
+STRUCTURE.forEach(p => {
+  validIds.add(p.id);
+  p.sections.forEach(s => {
+    validIds.add(s.id);
+    s.events.forEach(e => validIds.add(e.id));
+  });
+});
+
+// ロード時に存在しないIDは破棄
+const saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+let uncheckedIds = new Set(saved.filter(id => validIds.has(id)));
+
+function saveLS() {
+  localStorage.setItem(LS_KEY, JSON.stringify([...uncheckedIds]));
+}
+
+function isChecked(id) {
+  return !uncheckedIds.has(id);
+}
+
+// =====================
+// フラットイベントリスト
+// =====================
+function allEvents() {
+  const list = [];
+  for (const phase of STRUCTURE)
+    for (const sec of phase.sections)
+      for (const ev of sec.events)
+        list.push(ev);
+  return list;
+}
+
+// =====================
+// 実行用配列（チェック済みのみ、at順）
+// =====================
+let activeEvents = [];
+function recompileActive() {
+  activeEvents = allEvents()
+    .filter(ev => isChecked(ev.id))
+    .sort((a, b) => a.at - b.at)
+    .map(ev => ({ ...ev })); // コピー
+}
+recompileActive();
+
+// =====================
+// UI構築
+// =====================
+const listEl = document.getElementById('eventList');
+
+function buildList() {
+  listEl.innerHTML = '';
+  for (const phase of STRUCTURE) {
+    const phaseBlock = document.createElement('div');
+    phaseBlock.className = 'phase-block';
+
+    // Phase行
+    const phaseRow = makeRow('phase-row', phase.id, phase.label, null, null);
+    phaseBlock.appendChild(phaseRow);
+
+    for (const sec of phase.sections) {
+      const secBlock = document.createElement('div');
+      secBlock.className = 'section-block';
+
+      if (sec.label) {
+        const secRow = makeRow('section-row', sec.id, sec.label, null, null);
+        secBlock.appendChild(secRow);
+      }
+
+      for (const ev of sec.events) {
+        const evBlock = document.createElement('div');
+        evBlock.className = 'event-block';
+        const evRow = makeRow('event-row', ev.id, ev.label, ev.at);
+        evBlock.appendChild(evRow);
+        secBlock.appendChild(evBlock);
+      }
+
+      phaseBlock.appendChild(secBlock);
+    }
+
+    listEl.appendChild(phaseBlock);
+  }
+}
+
+function jumpTo(sec) {
+  // 停止してからジャンプ・スタート
+  running = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  cancelSpeech();
+  elapsed = sec;
+  lastTs = null;
+  spokenSet = new Set(activeEvents.filter(e => e.at < sec).map(e => e.id));
+  currentCallout = '';
+  updateUI();
+  // スタート
+  running = true;
+  rafId = requestAnimationFrame(tick);
+}
+
+function makeRow(cls, id, label, at, jumpAt = null) {
+  const row = document.createElement('div');
+  row.className = `row ${cls}`;
+  row.dataset.id = id;
+
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.dataset.id = id;
+  cb.checked = isChecked(id);
+
+  const labelEl = document.createElement('span');
+  labelEl.textContent = label;
+
+  row.appendChild(cb);
+
+  if (at !== null) {
+    const atEl = document.createElement('span');
+    atEl.className = 'at-label';
+    atEl.textContent = `${at}s`;
+    atEl.title = 'クリックでここへジャンプ';
+    atEl.addEventListener('click', (e) => { e.stopPropagation(); jumpTo(at); });
+    row.appendChild(atEl);
+  }
+
+  row.appendChild(labelEl);
+
+  if (jumpAt !== null) {
+    const jBtn = document.createElement('button');
+    jBtn.className = 'jump-btn';
+    jBtn.textContent = `▶${jumpAt}sから`;
+    jBtn.title = `${jumpAt}sへジャンプ`;
+    jBtn.addEventListener('click', (e) => { e.stopPropagation(); jumpTo(jumpAt); });
+    row.appendChild(jBtn);
+  }
+
+  row.addEventListener('click', (e) => {
+    if (e.target === cb) return; // チェックボックス直クリックはイベント伝播で処理
+    cb.checked = !cb.checked;
+    onCheckChange(id, cb.checked, cls);
+  });
+  cb.addEventListener('change', () => onCheckChange(id, cb.checked, cls));
+
+  return row;
+}
+
+function onCheckChange(id, checked, cls) {
+  if (cls === 'phase-row') {
+    // phase配下の全section・event
+    const phase = STRUCTURE.find(p => p.id === id);
+    if (!phase) return;
+    setPhaseCheck(phase, checked);
+  } else if (cls === 'section-row') {
+    const { sec } = findSection(id);
+    if (!sec) return;
+    setSectionCheck(sec, checked);
+  } else {
+    setEventCheck(id, checked);
+  }
+  refreshCheckboxUI();
+  recompileActive();
+  saveLS();
+}
+
+function setPhaseCheck(phase, checked) {
+  if (checked) uncheckedIds.delete(phase.id); else uncheckedIds.add(phase.id);
+  for (const sec of phase.sections) setSectionCheck(sec, checked);
+}
+
+function setSectionCheck(sec, checked) {
+  if (checked) uncheckedIds.delete(sec.id); else uncheckedIds.add(sec.id);
+  for (const ev of sec.events) setEventCheck(ev.id, checked);
+}
+
+function setEventCheck(id, checked) {
+  if (checked) uncheckedIds.delete(id); else uncheckedIds.add(id);
+}
+
+function findSection(secId) {
+  for (const phase of STRUCTURE)
+    for (const sec of phase.sections)
+      if (sec.id === secId) return { phase, sec };
+  return {};
+}
+
+function refreshCheckboxUI() {
+  listEl.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.checked = isChecked(cb.dataset.id);
+  });
+}
+
+buildList();
+
+// 全チェック・全クリア
+document.getElementById('btnAllCheck').addEventListener('click', () => {
+  uncheckedIds.clear();
+  refreshCheckboxUI();
+  recompileActive();
+  saveLS();
+});
+document.getElementById('btnAllClear').addEventListener('click', () => {
+  for (const phase of STRUCTURE) {
+    uncheckedIds.add(phase.id);
+    for (const sec of phase.sections) {
+      uncheckedIds.add(sec.id);
+      for (const ev of sec.events) uncheckedIds.add(ev.id);
+    }
+  }
+  refreshCheckboxUI();
+  recompileActive();
+  saveLS();
+});
+
+// =====================
+// 音声
+// =====================
+const synth = window.speechSynthesis;
+const speechQueue = [];
+let isSpeaking = false;
+
+function speak(text) {
+  speechQueue.push(text);
+  if (!isSpeaking) flushQueue();
+}
+function flushQueue() {
+  if (speechQueue.length === 0) { isSpeaking = false; return; }
+  isSpeaking = true;
+  const utt = new SpeechSynthesisUtterance(speechQueue.shift());
+  utt.lang = 'ja-JP';
+  utt.rate = 1.0;
+  utt.onend = () => flushQueue();
+  synth.speak(utt);
+}
+function cancelSpeech() {
+  speechQueue.length = 0;
+  isSpeaking = false;
+  synth.cancel();
+}
+
+// =====================
+// カウントダウン設定
+// =====================
+const countdownSelEl = document.getElementById('countdownSec');
+for (let n = 1; n <= 21; n++) {
+  const opt = document.createElement('option');
+  opt.value = n;
+  opt.textContent = `${n}秒`;
+  if (n === 5) opt.selected = true;
+  countdownSelEl.appendChild(opt);
+}
+function getCountdownSec() { return parseInt(countdownSelEl.value, 10); }
+countdownSelEl.addEventListener('change', () => { if (!running) resetState(); });
+
+// =====================
+// モード
+// =====================
+let liveMode = true;
+const liveOptionsEl = document.getElementById('liveOptions');
+function updateModeUI() {
+  liveOptionsEl.classList.toggle('hidden', !liveMode);
+}
+updateModeUI();
+function getStartElapsed() { return liveMode ? -getCountdownSec() : 0; }
+
+document.getElementById('btnTest').addEventListener('click', () => {
+  if (running) return;
+  liveMode = false;
+  document.getElementById('btnTest').classList.add('selected');
+  document.getElementById('btnLive').classList.remove('selected');
+  updateModeUI();
+  resetState();
+});
+document.getElementById('btnLive').addEventListener('click', () => {
+  if (running) return;
+  liveMode = true;
+  document.getElementById('btnLive').classList.add('selected');
+  document.getElementById('btnTest').classList.remove('selected');
+  updateModeUI();
+  resetState();
+});
+
+// =====================
+// タイマー状態
+// =====================
+let elapsed   = getStartElapsed();
+let lastTs    = null;
+let rafId     = null;
+let running   = false;
+let spokenSet = new Set(); // 発火済みイベントid
+let currentCallout = '';
+
+function formatTime(sec) {
+  const s = Math.floor(Math.abs(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+const timerEl   = document.getElementById('timer');
+const calloutEl = document.getElementById('callout');
+
+function updateUI() {
+  if (elapsed < 0) {
+    timerEl.textContent = Math.ceil(-elapsed);
+    timerEl.className = 'timer negative';
+  } else {
+    timerEl.textContent = formatTime(elapsed);
+    timerEl.className = 'timer';
+  }
+  calloutEl.textContent = currentCallout || '—';
+  calloutEl.className = 'callout-box' + (currentCallout ? ' active' : '');
+  updateFiredUI();
+}
+
+function updateFiredUI() {
+  listEl.querySelectorAll('.event-row').forEach(row => {
+    const id = row.dataset.id;
+    const ev = allEvents().find(e => e.id === id);
+    if (ev && elapsed >= ev.at) {
+      row.classList.add('fired');
+    } else {
+      row.classList.remove('fired');
+    }
+  });
+}
+
+function tick(ts) {
+  if (lastTs !== null) elapsed += (ts - lastTs) / 1000;
+  lastTs = ts;
+
+  // 発火チェック（activeEventsはチェック済みのみ）
+  for (const ev of activeEvents) {
+    if (!spokenSet.has(ev.id) && elapsed >= ev.at) {
+      spokenSet.add(ev.id);
+      currentCallout = ev.label;
+      speak(ev.label);
+      setTimeout(() => {
+        if (currentCallout === ev.label) { currentCallout = ''; updateUI(); }
+      }, 5000);
+    }
+  }
+
+  const maxAt = Math.max(0, ...activeEvents.map(e => e.at));
+  if (activeEvents.length > 0 && elapsed >= maxAt + 10) {
+    running = false;
+    currentCallout = '';
+    updateUI();
+    return;
+  }
+
+  updateUI();
+  if (running) rafId = requestAnimationFrame(tick);
+}
+
+function resetState() {
+  running = false;
+  elapsed = getStartElapsed();
+  lastTs  = null;
+  spokenSet.clear();
+  currentCallout = '';
+  cancelSpeech();
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  updateUI();
+}
+
+document.getElementById('btnStart').addEventListener('click', () => {
+  if (running) return;
+  if (elapsed >= 9999) resetState();
+  running = true;
+  lastTs  = null;
+  rafId   = requestAnimationFrame(tick);
+});
+document.getElementById('btnStop').addEventListener('click', () => {
+  running = false;
+  lastTs  = null;
+  cancelSpeech();
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  updateUI();
+});
+document.getElementById('btnReset').addEventListener('click', resetState);
+
+// << >> ボタン（押しっぱなし対応）
+function holdButton(btnId, delta) {
+  const btn = document.getElementById(btnId);
+  let interval = null;
+  const start = () => {
+    elapsed += delta * 0.5;
+    updateUI();
+    interval = setInterval(() => { elapsed += delta; updateUI(); }, 150);
+  };
+  const stop = () => { clearInterval(interval); interval = null; };
+  btn.addEventListener('mousedown',   start);
+  btn.addEventListener('touchstart',  start, { passive: true });
+  btn.addEventListener('mouseup',     stop);
+  btn.addEventListener('mouseleave',  stop);
+  btn.addEventListener('touchend',    stop);
+  btn.addEventListener('touchcancel', stop);
+}
+holdButton('btnAdv', +1);
+holdButton('btnRew', -1);
+
+updateUI();
+</script>
+</body>
+</html>
