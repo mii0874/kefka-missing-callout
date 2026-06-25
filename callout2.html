@@ -76,62 +76,60 @@
   }
   button:hover { opacity: 0.85; }
   #btnStart {
-    flex: 2;
-    background: #3a7acd;
+    flex: 3;
+    background: #2878d0;
     color: #fff;
     font-size: 1.1rem;
-    padding: 12px 0;
+    padding: 13px 0;
   }
   #btnRew, #btnAdv {
     flex: 1;
-    background: #1e4a8a;
-    color: #aaccff;
+    background: #182635;
+    color: #5a8ab0;
     font-size: 1.1rem;
-    padding: 10px 0;
+    padding: 13px 0;
+    border: 1px solid #253848;
   }
   #btnStop {
-    flex: 1;
-    background: #5a3a3a;
-    color: #ddd;
-    padding: 10px 0;
+    flex: 1.5;
+    background: #6a3520;
+    color: #e8b090;
+    padding: 13px 0;
   }
   #btnReset {
-    flex: 1;
-    background: #2a3a4a;
-    color: #aaa;
-    padding: 10px 0;
+    flex: 1.5;
+    background: #1a4a3a;
+    color: #60c0a0;
+    padding: 13px 0;
   }
 
-  /* サブコントロール（CD + チェック系） */
+  /* サブコントロール */
   .sub-bar {
     display: flex;
-    align-items: center;
     gap: 6px;
     margin-top: 6px;
-    flex-wrap: wrap;
-  }
-  .sub-bar label {
-    font-size: 0.78rem;
-    color: #7a9ab4;
+    align-items: stretch;
   }
   .sub-bar select {
+    flex: 1;
     background: #131f2e;
     color: #c8d8e8;
     border: 1px solid #2a4a6a;
-    border-radius: 5px;
-    padding: 2px 6px;
-    font-size: 0.78rem;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.85rem;
     cursor: pointer;
   }
   .sub-bar button {
-    padding: 3px 10px;
-    font-size: 0.75rem;
+    flex: 1;
+    padding: 5px 0;
+    font-size: 1rem;
     background: #1e3d5a;
     color: #aac8e8;
-    border-radius: 5px;
+    border-radius: 6px;
   }
-  #btnAutoScroll { background: #1a3a2a; color: #aad4aa; }
-  #btnAutoScroll.off { background: #2a2a3a; color: #7a8a9a; }
+  #btnAutoScroll { background: #1e3d5a; color: #aac8e8; }
+  #btnAutoScroll.off { background: #1e3d5a; color: #aac8e8; }
 
   /* ── スクロールリスト ── */
   .event-list-wrap {
@@ -272,11 +270,10 @@
     <button id="btnReset">↺</button>
   </div>
   <div class="sub-bar">
-    <label>カウントダウン</label>
     <select id="countdownSec"></select>
-    <button id="btnAllCheck">全てチェック</button>
-    <button id="btnAllClear">全てクリア</button>
-    <button id="btnAutoScroll">自動スクロール ON</button>
+    <button id="btnAllCheck" title="全てチェック">☑</button>
+    <button id="btnAllClear" title="全てクリア">☐</button>
+    <button id="btnAutoScroll" title="自動スクロール">↕</button>
   </div>
 </div>
 
@@ -769,7 +766,7 @@ let autoScroll = true;
 document.getElementById('btnAutoScroll').addEventListener('click', () => {
   autoScroll = !autoScroll;
   const btn = document.getElementById('btnAutoScroll');
-  btn.textContent = autoScroll ? '自動スクロール ON' : '自動スクロール OFF';
+  btn.textContent = '↕';
   btn.classList.toggle('off', !autoScroll);
 });
 
