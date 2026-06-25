@@ -6,97 +6,141 @@
 <title>ミッシング コールアウト v2</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    height: 100%;
-  }
+  html, body { height: 100%; }
   body {
     background: #0f1a26;
     color: #c8d8e8;
     font-family: 'Helvetica Neue', sans-serif;
     display: flex;
     flex-direction: column;
+    height: 100%;
+  }
+
+  /* ── 上部固定エリア ── */
+  .fixed-top {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: #0f1a26;
+    border-bottom: 1px solid #1e3450;
+    padding: 8px 12px 6px;
+  }
+
+  /* タイマー＋コールアウト横並び */
+  .top-bar {
+    display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 16px 8px;
   }
-  h1 { font-size: 1.0rem; color: #7aa8d4; letter-spacing: 0.05em; flex-shrink: 0; }
-
-  /* タイマー */
   .timer {
-    font-size: 3rem;
+    font-size: 2.6rem;
     font-weight: bold;
     color: #ffffaa;
-    letter-spacing: 0.05em;
-    text-align: center;
-    min-width: 100px;
-    flex-shrink: 0;
+    letter-spacing: 0.04em;
     line-height: 1;
+    flex-shrink: 0;
+    min-width: 80px;
+    text-align: center;
   }
   .timer.negative { color: #88aacc; }
-
-  /* コールアウトボックス */
   .callout-box {
-    font-size: 1.2rem;
+    flex: 1;
+    font-size: 1.05rem;
     color: #fff;
     background: #1a2d42;
     border: 1px solid #3a5a7a;
     border-radius: 8px;
-    padding: 10px 24px;
-    min-height: 46px;
-    text-align: center;
-    min-width: 300px;
+    padding: 8px 14px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
     transition: background 0.2s;
-    flex-shrink: 0;
   }
   .callout-box.active { background: #1e3d5a; border-color: #5b91ff; color: #ffffaa; }
 
-  /* コントロール */
-  .controls { display: flex; gap: 8px; align-items: stretch; flex-shrink: 0; }
-  .start-group { display: flex; flex-direction: column; gap: 4px; }
-  .seek-btns { display: flex; gap: 4px; }
-  .sub-btns { display: flex; flex-direction: column; gap: 4px; }
+  /* コントロールバー（ボタン1行） */
+  .ctrl-bar {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    align-items: stretch;
+  }
   button {
-    padding: 8px 20px;
     border: none;
     border-radius: 6px;
-    font-size: 0.95rem;
     cursor: pointer;
     font-weight: bold;
     transition: opacity 0.15s;
+    font-size: 0.95rem;
   }
   button:hover { opacity: 0.85; }
-  #btnStart { background: #3a7acd; color: #fff; font-size: 1.05rem; padding: 12px 20px; }
-  #btnStop  { background: #5a3a3a; color: #ddd; flex: 1; }
-  #btnReset { background: #2a3a4a; color: #aaa; flex: 1; }
+  #btnStart {
+    flex: 2;
+    background: #3a7acd;
+    color: #fff;
+    font-size: 1.1rem;
+    padding: 12px 0;
+  }
   #btnRew, #btnAdv {
-    background: #1e3428; color: #aad4aa;
-    padding: 6px 0; font-size: 1.1rem; flex: 1;
+    flex: 1;
+    background: #1e4a8a;
+    color: #aaccff;
+    font-size: 1.1rem;
+    padding: 10px 0;
+  }
+  #btnStop {
+    flex: 1;
+    background: #5a3a3a;
+    color: #ddd;
+    padding: 10px 0;
+  }
+  #btnReset {
+    flex: 1;
+    background: #2a3a4a;
+    color: #aaa;
+    padding: 10px 0;
   }
 
-  /* イベントリスト */
+  /* サブコントロール（CD + チェック系） */
+  .sub-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .sub-bar label {
+    font-size: 0.78rem;
+    color: #7a9ab4;
+  }
+  .sub-bar select {
+    background: #131f2e;
+    color: #c8d8e8;
+    border: 1px solid #2a4a6a;
+    border-radius: 5px;
+    padding: 2px 6px;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .sub-bar button {
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    background: #1e3d5a;
+    color: #aac8e8;
+    border-radius: 5px;
+  }
+  #btnAutoScroll { background: #1a3a2a; color: #aad4aa; }
+  #btnAutoScroll.off { background: #2a2a3a; color: #7a8a9a; }
+
+  /* ── スクロールリスト ── */
   .event-list-wrap {
-    width: 100%;
-    max-width: 520px;
     flex: 1 1 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    padding: 8px 10px 8px 10px;
   }
-  .list-controls {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-    justify-content: flex-start;
-    flex-shrink: 0;
-  }
-  .list-controls button {
-    padding: 5px 14px;
-    font-size: 0.82rem;
-    background: #1e3d5a;
-    color: #aac8e8;
-    border-radius: 6px;
-  }
-
   .event-list-scroll {
     flex: 1 1 0;
     min-height: 0;
@@ -110,6 +154,22 @@
   .event-list-scroll::-webkit-scrollbar-track { background: #0d1620; border-radius: 0 8px 8px 0; }
   .event-list-scroll::-webkit-scrollbar-thumb { background: #3a6a9a; border-radius: 8px; border: 3px solid #0d1620; }
   .event-list-scroll::-webkit-scrollbar-thumb:hover { background: #5a9acd; }
+
+  /* リストコントロール */
+  .list-controls {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    justify-content: flex-start;
+    flex-shrink: 0;
+  }
+  .list-controls button {
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    background: #1e3d5a;
+    color: #aac8e8;
+    border-radius: 5px;
+  }
 
   .phase-block { margin-bottom: 10px; }
   .section-block { margin-left: 16px; margin-top: 4px; }
@@ -125,59 +185,25 @@
     user-select: none;
   }
   .row:hover { background: #1a2d42; }
-  .row.phase-row  { font-weight: bold; color: #7aa8d4; font-size: 0.95rem; }
+  .row.phase-row   { font-weight: bold; color: #7aa8d4; font-size: 0.95rem; }
   .row.section-row { font-weight: bold; color: #a8c8e8; font-size: 0.88rem; }
-  .row.event-row  { color: #c8d8e8; font-size: 0.85rem; }
+  .row.event-row   { color: #c8d8e8; font-size: 0.85rem; }
   .row.event-row.fired { opacity: 0.35; }
   .row.event-row.has-star { color: #f0c060; }
   .row.event-row.has-star.fired { opacity: 0.35; }
 
   .row input[type=checkbox] { width: 15px; height: 15px; cursor: pointer; accent-color: #5b91ff; flex-shrink: 0; }
   .at-label {
-    color: #5a8aaa; font-size: 0.8rem; min-width: 44px; text-align: right;
+    color: #5a8aaa; font-size: 0.8rem; min-width: 40px; text-align: right;
     font-variant-numeric: tabular-nums; cursor: pointer; text-decoration: underline dotted;
   }
   .at-label:hover { color: #aad4ff; }
 
-  /* カウントダウン設定 */
-  .countdown-options {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-    color: #7a9ab4;
-    flex-shrink: 0;
-  }
-  .countdown-options select {
-    background: #131f2e;
-    color: #c8d8e8;
-    border: 1px solid #2a4a6a;
-    border-radius: 6px;
-    padding: 2px 6px;
-    font-size: 0.82rem;
-    cursor: pointer;
-  }
-
-  /* 自動スクロールトグル */
-  #btnAutoScroll {
-    padding: 3px 10px;
-    font-size: 0.75rem;
-    background: #1a3a2a;
-    color: #aad4aa;
-    border-radius: 5px;
-  }
-  #btnAutoScroll.off {
-    background: #2a2a3a;
-    color: #7a8a9a;
-  }
-
-  .note { font-size: 0.78rem; color: #5a7a9a; text-align: center; flex-shrink: 0; }
-
   /* 時間記録トグルボタン */
   .record-toggle-btn {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 16px;
+    right: 16px;
     background: #4a3a7a;
     color: #d8c8ff;
     border: none;
@@ -198,7 +224,7 @@
   /* 時間記録パネル */
   .record-float {
     position: fixed;
-    right: 20px;
+    right: 16px;
     top: 50%;
     transform: translateY(-50%);
     background: #1a2d42;
@@ -213,85 +239,51 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
   .record-float.hidden { display: none; }
-  .record-float-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+  .record-float-header { display: flex; align-items: center; justify-content: space-between; }
   .record-float-header label { font-size: 0.85rem; color: #7aa8d4; font-weight: bold; }
   #btnRecordClose {
-    background: none;
-    border: none;
-    color: #5a7a9a;
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 0 4px;
-    line-height: 1;
+    background: none; border: none; color: #5a7a9a;
+    font-size: 1rem; cursor: pointer; padding: 0 4px; line-height: 1;
   }
   #btnRecordClose:hover { color: #c8d8e8; opacity: 1; }
-  #btnRecord {
-    background: #4a3a7a;
-    color: #d8c8ff;
-    padding: 10px;
-    font-size: 1rem;
-    width: 100%;
-  }
-  #btnRecordClear {
-    background: #2a3a4a;
-    color: #aaa;
-    padding: 4px;
-    font-size: 0.78rem;
-    width: 100%;
-  }
+  #btnRecord { background: #4a3a7a; color: #d8c8ff; padding: 10px; font-size: 1rem; width: 100%; }
+  #btnRecordClear { background: #2a3a4a; color: #aaa; padding: 4px; font-size: 0.78rem; width: 100%; }
   #recordArea {
-    width: 100%;
-    height: 100px;
-    background: #131f2e;
-    color: #c8d8e8;
-    border: 1px solid #2a4a6a;
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 0.82rem;
-    font-family: monospace;
-    resize: vertical;
+    width: 100%; height: 100px;
+    background: #131f2e; color: #c8d8e8;
+    border: 1px solid #2a4a6a; border-radius: 6px;
+    padding: 6px 8px; font-size: 0.82rem; font-family: monospace; resize: vertical;
   }
 </style>
 </head>
 <body>
 
-<h1>ケフカ ミッシング コールアウト v2</h1>
-
-<div class="countdown-options">
-  <label>カウントダウン</label>
-  <select id="countdownSec"></select>
-</div>
-
-<div class="timer" id="timer">0:00</div>
-<div class="callout-box" id="callout">—</div>
-
-<div class="controls">
-  <div class="start-group">
+<!-- 上部固定エリア -->
+<div class="fixed-top">
+  <div class="top-bar">
+    <div class="timer" id="timer">0:00</div>
+    <div class="callout-box" id="callout">—</div>
+  </div>
+  <div class="ctrl-bar">
+    <button id="btnRew">&lt;&lt;</button>
     <button id="btnStart">▶ 開始</button>
-    <div class="seek-btns">
-      <button id="btnRew">&lt;&lt;</button>
-      <button id="btnAdv">&gt;&gt;</button>
-    </div>
+    <button id="btnAdv">&gt;&gt;</button>
+    <button id="btnStop">⏸</button>
+    <button id="btnReset">↺</button>
   </div>
-  <div class="sub-btns">
-    <button id="btnStop">⏸ 一時停止</button>
-    <button id="btnReset">↺ リセット</button>
-  </div>
-</div>
-
-<div class="event-list-wrap">
-  <div class="list-controls">
+  <div class="sub-bar">
+    <label>カウントダウン</label>
+    <select id="countdownSec"></select>
     <button id="btnAllCheck">全てチェック</button>
     <button id="btnAllClear">全てクリア</button>
     <button id="btnAutoScroll">自動スクロール ON</button>
   </div>
-  <div class="event-list-scroll" id="eventList"></div>
 </div>
 
+<!-- スクロールリスト -->
+<div class="event-list-wrap">
+  <div class="event-list-scroll" id="eventList"></div>
+</div>
 
 <!-- 時間記録パネル（デフォルト非表示） -->
 <div class="record-float hidden" id="recordFloat">
