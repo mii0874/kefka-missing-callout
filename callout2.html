@@ -292,7 +292,6 @@
   <div class="event-list-scroll" id="eventList"></div>
 </div>
 
-<p class="note">※ ブラウザの音声合成を使用。開始前に音量を確認してください。</p>
 
 <!-- 時間記録パネル（デフォルト非表示） -->
 <div class="record-float hidden" id="recordFloat">
@@ -623,7 +622,8 @@ function makeRow(cls, id, label, at, jumpAt = null) {
   if (at !== null) {
     const atEl = document.createElement('span');
     atEl.className = 'at-label';
-    atEl.textContent = `${at}s`;
+    const atSec = Math.floor(at);
+    atEl.textContent = `${Math.floor(atSec/60)}:${String(atSec%60).padStart(2,'0')}`;
     atEl.title = 'クリックでここへジャンプ';
     atEl.addEventListener('click', (e) => { e.stopPropagation(); jumpTo(at); });
     row.appendChild(atEl);
