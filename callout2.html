@@ -131,13 +131,23 @@
   #btnAutoScroll { background: #1e3d5a; color: #aac8e8; }
   #btnAutoScroll.off { background: #1e3d5a; color: #aac8e8; }
 
+  .file-stamp {
+    font-size: 0.7rem;
+    color: #3a5a7a;
+    text-align: right;
+    width: 100%;
+    max-width: 600px;
+    padding: 2px 2px 2px;
+    flex-shrink: 0;
+  }
+
   /* ── スクロールリスト ── */
   .event-list-wrap {
     flex: 1 1 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: 8px 10px 8px 10px;
+    padding: 8px 10px 0 10px;
   }
   .event-list-scroll {
     flex: 1 1 0;
@@ -282,6 +292,8 @@
   <div class="event-list-scroll" id="eventList"></div>
 </div>
 
+<p class="file-stamp" id="fileStamp"></p>
+
 <!-- 時間記録パネル（デフォルト非表示） -->
 <div class="record-float hidden" id="recordFloat">
   <div class="record-float-header">
@@ -366,21 +378,24 @@ const STRUCTURE = [
           { at: 546.98,  label: 'サンダガ注意' },
           { at: 555.0,  label: 'マーカー準備' },
           { at: 563.1,   label: 'ケフカ移動。ビンタ注意' },
-          { at: 572.5,   label: 'アタック1準備' },
-          { at: 581.5,  label: 'アタック2準備' },
+          { at: 573.0,   label: 'アタック1準備' },
+          { at: 579.0,  label: 'アタック1線取り。アタック2準備' },
+          { at: 585.5,  label: 'アタック2線取り' },
           { at: 591.0,  label: 'サンダガ注意' },
           { at: 597.0,  label: 'ケフカ移動。ダミング注意、ビンタ注意' },
-          { at: 605.0,  label: 'つぎアタック1 2 3' },
-          { at: 612.0,  label: 'バインド1入れ替え準備' },
-          { at: 619.5,  label: 'バインド2入れ替え準備' },
-          { at: 625.36,  label: 'ケフカ移動。ダミング注意、ボクチン注意' },
+          { at: 604.5,  label: 'つぎアタック1 2 3' },
+          { at: 610.0,  label: 'アタック1 2 3。バインド1入れ替え準備' },
+          { at: 616.5,  label: 'バインド1線取り。バインド2入れ替え準備' },
+          { at: 622.5,  label: 'バインド2線取り' },
+          { at: 625.0,  label: 'ケフカ移動。ダミング注意、ボクチン注意' },
           { at: 633.14,  label: 'サンダガ注意' },
           { at: 639.04,  label: 'つぎバインド1 2 3' },
-          { at: 645.26,  label: '禁止1入れ替え準備' },
-          { at: 652.5,  label: '禁止2入れ替え準備' },
+          { at: 644.26,  label: 'バインド1 2 3。禁止1入れ替え準備' },
+          { at: 651.5,  label: '禁止1線取り。禁止2入れ替え準備' },
+          { at: 656.5,  label: '禁止2線取り' },
           { at: 662.00,  label: 'ヴァーホリ注意、ビンタ注意' },
-          { at: 676.5,  label: 'つぎ禁止1 2' },
-          { at: 681.14,  label: 'つぎ禁止2だけ。ボクチン注意' },
+          { at: 673.5,  label: 'つぎ禁止1 2' },
+          { at: 677.0,  label: '禁止1 2。つぎ禁止2だけ。ボクチン注意' },
           { at: 687.32,  label: 'ボクチン注意' },
 //        { at: 695.6,   label: '4ね4基準' },
 //        { at: 698.12,  label: '真ん中集合4基準' },
@@ -877,6 +892,11 @@ document.getElementById('btnRecordClear').addEventListener('click', () => {
 });
 
 updateUI();
+
+// ファイルタイムスタンプ表示
+const d = new Date(document.lastModified);
+document.getElementById('fileStamp').textContent =
+  `updated: ${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 </script>
 </body>
 </html>
