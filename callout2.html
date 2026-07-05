@@ -247,7 +247,8 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
   .record-float.hidden { display: none; }
-  .record-float-header { display: flex; align-items: center; justify-content: space-between; }
+  .record-float-header { display: flex; align-items: center; justify-content: space-between; cursor: grab; user-select: none; }
+  .record-float-header:active { cursor: grabbing; }
   .record-float-header label { font-size: 0.85rem; color: #7aa8d4; font-weight: bold; }
   #btnRecordClose {
     background: none; border: none; color: #5a7a9a;
@@ -262,6 +263,121 @@
     border: 1px solid #2a4a6a; border-radius: 6px;
     padding: 6px 8px; font-size: 0.82rem; font-family: monospace; resize: vertical;
   }
+
+  /* P4フロートパネル */
+  .p4-float {
+    position: fixed;
+    right: 16px;
+    top: 170px;
+    background: #131f2e;
+    border: 1px solid #2a4a6a;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 220px;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  }
+  .p4-float.hidden { display: none; }
+  .p4-float-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: grab;
+    user-select: none;
+  }
+  .p4-float-header:active { cursor: grabbing; }
+  .p4-float-header label { font-size: 0.85rem; color: #7aa8d4; font-weight: bold; }
+  #btnP4Close {
+    background: none; border: none; color: #5a7a9a;
+    font-size: 1rem; cursor: pointer; padding: 0 4px; line-height: 1;
+  }
+  #btnP4Close:hover { color: #c8d8e8; opacity: 1; }
+
+  .p4-float h2 { font-size: 0.78rem; color: #ffffaa; }
+
+  .p4-rows { display: flex; flex-direction: column; gap: 4px; }
+  .p4-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #1a2d42;
+    border-radius: 5px;
+    padding: 4px 6px;
+  }
+  .p4-row .p4-icon { width: 16px; height: 16px; flex-shrink: 0; }
+  .p4-row .p4-icon svg { width: 100%; height: 100%; display: block; }
+  .p4-row .p4-lbl {
+    font-size: 0.7rem;
+    color: #c8d8e8;
+    min-width: 40px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .p4-switch {
+    display: flex;
+    border: 1px solid #3a5a7a;
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .p4-switch-seg {
+    padding: 3px 6px;
+    font-size: 0.68rem;
+    background: #0f1a26;
+    color: #7a9ab4;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1;
+  }
+  .p4-switch-seg:hover { color: #c8d8e8; }
+  .p4-switch-seg.on { background: #1e3d5a; color: #ffffaa; font-weight: bold; }
+  .p4-switch.readonly { opacity: 0.55; pointer-events: none; }
+
+  .p4-action-row { display: flex; gap: 6px; }
+  .p4-act {
+    flex: 1;
+    padding: 7px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .p4-act:hover { opacity: 0.85; }
+  .p4-btn-star  { background: #3a7acd; color: #fff; }
+  .p4-btn-clear { background: #2a3a4a; color: #aaa; }
+
+  .p4-result {
+    background: #0f1a26;
+    border: 1px solid #2a4a6a;
+    border-radius: 5px;
+    padding: 6px 8px;
+    min-height: 20px;
+  }
+  .p4-result ol { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+  .p4-result li { font-size: 0.8rem; color: #ffffaa; font-weight: bold; }
+  .p4-result .p4-placeholder { color: #5a7a9a; font-size: 0.72rem; font-weight: normal; }
+
+  /* 両パネルが開いている時: 記録パネルを下寄せ */
+  .record-float.below-p4 {
+    top: auto;
+    bottom: 70px;
+    transform: none;
+  }
+
+  /* イベント行のp4stepプレフィックス */
+  .p4-step-prefix {
+    font-size: 0.8rem;
+    color: #7ad0b0;
+    font-weight: bold;
+    flex-shrink: 0;
+    min-width: 22px;
+  }
+  .p4-step-prefix.resolved { color: #ffffaa; }
 </style>
 </head>
 <body>
@@ -284,6 +400,7 @@
     <button id="btnAllCheck" title="全てチェック">☑</button>
     <button id="btnAllClear" title="全てクリア">☐</button>
     <button id="btnAutoScroll" title="自動スクロール">↕</button>
+    <button id="btnP4Toggle" title="P4判定">P4</button>
   </div>
 </div>
 
@@ -307,6 +424,33 @@
 
 <!-- 記録パネル表示ボタン -->
 <button class="record-toggle-btn" id="btnRecordToggle" title="時間記録">⏺</button>
+
+<!-- P4フロートパネル -->
+<div class="p4-float hidden" id="p4Float">
+  <div class="p4-float-header">
+    <label>P4 判定</label>
+    <button id="btnP4Close">×</button>
+  </div>
+
+  <h2>グランドクロス〜つなみ/ほのお</h2>
+  <div class="p4-rows">
+    <div class="p4-row" id="p4gc1-row"></div>
+    <div class="p4-row" id="p4t1-row"></div>
+    <div class="p4-row" id="p4gc2-row"></div>
+    <div class="p4-row" id="p4t2-row"></div>
+  </div>
+  <div class="p4-action-row">
+    <button class="p4-act p4-btn-star" id="btnP4Star">★ 正解</button>
+    <button class="p4-act p4-btn-clear" id="btnP4Clear">クリア</button>
+  </div>
+  <div class="p4-result" id="p4GcResult"><div class="p4-placeholder">★を押すと正解が表示されます</div></div>
+
+  <h2>マジックチャージ</h2>
+  <div class="p4-rows" id="p4McRows">
+    <div class="p4-row" id="p4mc-thunder-row"></div>
+    <div class="p4-row" id="p4mc-blizzard-row"></div>
+  </div>
+</div>
 
 <script>
 // =====================
@@ -401,7 +545,7 @@ const STRUCTURE = [
           { at: 662.00,  label: 'ヴァーホリ注意、ビンタ注意' },
           { at: 675.3,  label: '禁止1 2' },
           { at: 685.8,  label: 'ボクチン注意' },
-          { at: 694.2,   label: '中央集合' },
+          { at: 694.2,   label: '中央集合からのペア範囲捨て' },
           { at: 711.0,  label: 'ブリザガこおりつき注意' },
           { at: 716.0,  label: 'カオス殴る' },
         ]
@@ -412,9 +556,36 @@ const STRUCTURE = [
     label: 'P4',
     sections: [
       {
-        label: '開幕', at: 410,
+        label: '開幕', at: 740,
         events: [
-//        { at: 915.66,  label: '1回2回3回終わったら波除け' },
+          { at: 744.9,  label: 'おちょくりソウル★' },
+//          { at: 751.6,  label: 'グランドクロス' },
+//          { at: 763.4,  label: 'つなみほのお' },
+//          { at: 768.3,  label: 'グランドクロス' },
+//          { at: 770.1,  label: 'つなみほのお' },
+          { at: 790.0,  label: '', p4step: 1 },
+          { at: 794.5,  label: 'ビームみる' },
+          { at: 796.0,  label: '', p4step: 2 },
+          { at: 803.4,  label: '加速度注意' },
+          { at: 809.2,  label: '視線持ち中央 ', p4step: 3 },
+          { at: 814.6,  label: 'サンダガ覚える' },
+          { at: 821.1,  label: '真ん中集合 アルファ見る この後ほのお ', p4step: 4 },
+          { at: 828.0,  label: '', p4step: 5 },
+          { at: 831.8,  label: '加速度注意 ブリザガ覚える' },
+          { at: 835.4,  label: '視線持ち中央 ', p4step: 6 },
+          { at: 844.9,  label: '真ん中集合 この後つなみ ', p4step: 7 },
+          { at: 859.3,  label: '全体' },
+        ]
+      }
+    ]
+  },
+//  {
+//    label: 'P5',
+//    sections: [
+//      {
+//        label: '開幕', at: 740,
+//        events: [
+//        { at: 744.9,  label: 'おちょくりソウル' },
 //        { at: 930.62,  label: 'オーケストラ距離感注意' },
 //        { at: 934.06,  label: 'スキップ' },
 //        { at: 934.76,  label: 'はい入れた' },
@@ -447,10 +618,10 @@ const STRUCTURE = [
 //        { at: 1079.2,  label: '半時計' },
 //        { at: 1083.86, label: 'OK' },
 //        { at: 1091.12, label: 'OK' },
-        ]
-      }
-    ]
-  }
+//        ]
+//      }
+//    ]
+//  }
 ];
 
 // ID自動生成
@@ -592,6 +763,15 @@ function makeRow(cls, id, label, at, jumpAt = null) {
 
   row.appendChild(labelEl);
 
+  // p4step サフィックス（ラベルの後ろ）
+  const ev = cls === 'event-row' ? allEvents().find(e => e.id === id) : null;
+  if (ev && ev.p4step) {
+    const sufEl = document.createElement('span');
+    sufEl.className = 'p4-step-prefix';
+    sufEl.dataset.p4step = ev.p4step;
+    sufEl.textContent = '';
+    row.appendChild(sufEl);
+  }
 
   row.addEventListener('click', (e) => {
     if (e.target === cb) return;
@@ -675,16 +855,18 @@ const synth = window.speechSynthesis;
 const speechQueue = [];
 let isSpeaking = false;
 
-function speak(text) {
-  speechQueue.push(text.replace(/★/g, ''));
+function speak(text, pitch = 1.0) {
+  speechQueue.push({ text: text.replace(/★/g, ''), pitch });
   if (!isSpeaking) flushQueue();
 }
 function flushQueue() {
   if (speechQueue.length === 0) { isSpeaking = false; return; }
   isSpeaking = true;
-  const utt = new SpeechSynthesisUtterance(speechQueue.shift());
+  const item = speechQueue.shift();
+  const utt = new SpeechSynthesisUtterance(item.text);
   utt.lang = 'ja-JP';
   utt.rate = 1.0;
+  utt.pitch = item.pitch;
   utt.onend = () => flushQueue();
   synth.speak(utt);
 }
@@ -809,10 +991,18 @@ function tick(ts) {
   for (const ev of activeEvents) {
     if (!spokenSet.has(ev.id) && elapsed >= ev.at) {
       spokenSet.add(ev.id);
-      currentCallout = ev.label;
-      speak(ev.label);
+      const displayText = buildP4DisplayText(ev);
+      currentCallout = displayText;
+      if (ev.p4step && p4GcResult) {
+        const base = ev.label.replace(/★/g, '');
+        const stepText = p4GcResult[ev.p4step - 1].replace(/^[①-⑦]/, '').trim();
+        if (base) speak(base);
+        speak(stepText, 2.0);
+      } else {
+        speak(ev.label.replace(/★/g, ''));
+      }
       setTimeout(() => {
-        if (currentCallout === ev.label) { currentCallout = ''; updateUI(); }
+        if (currentCallout === displayText) { currentCallout = ''; updateUI(); }
       }, 5000);
     }
   }
@@ -882,9 +1072,11 @@ const recordArea  = document.getElementById('recordArea');
 
 document.getElementById('btnRecordToggle').addEventListener('click', () => {
   recordFloat.classList.remove('hidden');
+  syncPanelPositions();
 });
 document.getElementById('btnRecordClose').addEventListener('click', () => {
   recordFloat.classList.add('hidden');
+  syncPanelPositions();
 });
 document.getElementById('btnRecord').addEventListener('click', () => {
   const t = elapsed.toFixed(1);
@@ -894,6 +1086,266 @@ document.getElementById('btnRecord').addEventListener('click', () => {
 document.getElementById('btnRecordClear').addEventListener('click', () => {
   recordArea.value = '';
 });
+
+// =====================
+// P4 判定パネル
+// =====================
+const P4_ICONS = {
+  water:  `<svg viewBox="0 0 32 32"><path d="M16 3 C10 13, 6 17, 6 22 a10 10 0 0 0 20 0 C26 17, 22 13, 16 3 Z" fill="#5bb8ff" stroke="#1a5a8a" stroke-width="1"/></svg>`,
+  flame:  `<svg viewBox="0 0 32 32"><path d="M16 2 C10 10, 8 14, 10 20 a6 6 0 0 0 12 0 c2 -6 0 -10 -6 -18 Z" fill="#ff8a3a" stroke="#a33f0a" stroke-width="1"/></svg>`,
+  wave:   `<svg viewBox="0 0 32 32"><path d="M2 20 q4 -6 8 0 t8 0 t8 0 t8 0" fill="none" stroke="#5bb8ff" stroke-width="3" stroke-linecap="round"/><path d="M2 26 q4 -6 8 0 t8 0 t8 0 t8 0" fill="none" stroke="#2a7ab0" stroke-width="3" stroke-linecap="round"/></svg>`,
+};
+
+const p4State = {
+  gc1: { true: true, early: true },
+  gc2: { true: true },
+  t1:  { isHonoo: true, true: true },
+  t2:  { true: true },
+  mc:  { thunder: true, blizzard: true },
+};
+
+let p4GcResult = null; // null=未確定, array=確定済み
+
+const P4_CIRCLED = ['①','②','③','④','⑤','⑥','⑦'];
+
+function p4WaterCallText(isTrue) { return isTrue ? 'つぎ水雷ほんとう' : 'つぎ水雷ぎゃく'; }
+function p4LosCallText(isTrue) { return isTrue ? 'みない' : 'みる'; }
+function p4ZoneCallTextFire(isTrue)  { return isTrue ? '円範囲' : 'ドーナツ'; }
+function p4ZoneCallTextWater(isTrue) { return isTrue ? 'ドーナツ' : '円範囲'; }
+
+function computeP4GcResult() {
+  const earlyGc = p4State.gc1.early ? p4State.gc1 : p4State.gc2;
+  const lateGc  = p4State.gc1.early ? p4State.gc2 : p4State.gc1;
+  const honooInst   = p4State.t1.isHonoo ? p4State.t1 : p4State.t2;
+  const tsunamiInst = p4State.t1.isHonoo ? p4State.t2 : p4State.t1;
+  return [
+    (p4State.gc1.true && p4State.gc2.true)   ? '①加速度全部とまる' :
+    (!p4State.gc1.true && !p4State.gc2.true) ? '①加速度全部うごく' :
+                                               '①',
+    '②' + p4WaterCallText(earlyGc.true),
+    '③' + p4LosCallText(p4State.gc1.true),
+    '④' + p4ZoneCallTextFire(honooInst.true),
+    '⑤' + p4WaterCallText(lateGc.true),
+    '⑥' + p4LosCallText(p4State.gc2.true),
+    '⑦' + p4ZoneCallTextWater(tsunamiInst.true),
+  ];
+}
+
+function buildP4DisplayText(ev) {
+  if (ev.p4step && p4GcResult) {
+    const stepText = p4GcResult[ev.p4step - 1].replace(/^[①-⑦]/, '').trim();
+    return ev.label ? ev.label + ' ' + stepText : stepText;
+  }
+  return ev.label;
+}
+
+function buildP4SpokenText(ev) {
+  let base = ev.label.replace(/★/g, '');
+  if (ev.p4step && p4GcResult) {
+    const stepText = p4GcResult[ev.p4step - 1].replace(/^[①-⑦]/, '').trim();
+    return base ? base + ' ' + stepText : stepText;
+  }
+  return base;
+}
+
+function p4MakeSwitch(pairs, currentValue, onChange, readOnly) {
+  const wrap = document.createElement('div');
+  wrap.className = 'p4-switch' + (readOnly ? ' readonly' : '');
+  pairs.forEach(p => {
+    const seg = document.createElement('div');
+    seg.className = 'p4-switch-seg' + (currentValue === p.value ? ' on' : '');
+    seg.textContent = p.label;
+    if (!readOnly) {
+      seg.addEventListener('click', () => { onChange(!currentValue); p4RenderAll(); });
+    }
+    wrap.appendChild(seg);
+  });
+  return wrap;
+}
+const P4_TF_PAIRS    = [{ value: true, label: '●' }, { value: false, label: '？' }];
+const P4_EARLY_PAIRS = [{ value: true, label: '早' }, { value: false, label: '遅' }];
+const P4_TYPE_PAIRS  = [{ value: true, label: '炎' }, { value: false, label: '水' }];
+
+function p4MakeIcon(key) {
+  const d = document.createElement('div');
+  d.className = 'p4-icon';
+  d.innerHTML = P4_ICONS[key];
+  return d;
+}
+function p4MakeLabel(text) {
+  const d = document.createElement('div');
+  d.className = 'p4-lbl';
+  d.textContent = text;
+  return d;
+}
+
+function p4RenderGcRow(rowId, gc, labelText, earlyValue, earlyReadOnly, onEarlyChange) {
+  const row = document.getElementById(rowId);
+  row.innerHTML = '';
+  row.append(
+    p4MakeIcon('water'),
+    p4MakeLabel(labelText),
+    p4MakeSwitch(P4_TF_PAIRS, gc.true, v => { gc.true = v; }),
+    p4MakeSwitch(P4_EARLY_PAIRS, earlyValue, onEarlyChange, earlyReadOnly)
+  );
+}
+function p4RenderTRow(rowId, inst, isHonoo, labelText, onTypeChange, typeReadOnly) {
+  const row = document.getElementById(rowId);
+  row.innerHTML = '';
+  row.append(
+    p4MakeIcon(isHonoo ? 'flame' : 'wave'),
+    p4MakeLabel(labelText),
+    p4MakeSwitch(P4_TF_PAIRS, inst.true, v => { inst.true = v; }),
+    p4MakeSwitch(P4_TYPE_PAIRS, isHonoo, onTypeChange, typeReadOnly)
+  );
+}
+function p4RenderMcRow(rowId, labelText, value, onChange) {
+  const row = document.getElementById(rowId);
+  row.innerHTML = '';
+  const lbl = p4MakeLabel(labelText);
+  const sw  = p4MakeSwitch(P4_TF_PAIRS, value, onChange, false);
+  const txt = document.createElement('span');
+  txt.style.cssText = 'font-size:0.75rem;color:#ffffaa;margin-left:auto;white-space:nowrap;';
+  txt.textContent = value ? 'ほんとう' : 'うそ';
+  row.append(lbl, sw, txt);
+}
+
+function p4RenderAll() {
+  p4RenderGcRow('p4gc1-row', p4State.gc1, 'GC①', p4State.gc1.early, false, v => { p4State.gc1.early = v; });
+  p4RenderGcRow('p4gc2-row', p4State.gc2, 'GC②', !p4State.gc1.early, true, null);
+  p4RenderTRow('p4t1-row', p4State.t1, p4State.t1.isHonoo, '波/炎①', v => { p4State.t1.isHonoo = v; }, false);
+  p4RenderTRow('p4t2-row', p4State.t2, !p4State.t1.isHonoo, '波/炎②', null, true);
+  p4RenderMcRow('p4mc-thunder-row',  'サンダガ（帯）', p4State.mc.thunder,  v => { p4State.mc.thunder  = v; });
+  p4RenderMcRow('p4mc-blizzard-row', 'ブリザガ（扇）', p4State.mc.blizzard, v => { p4State.mc.blizzard = v; });
+}
+
+function p4UpdateRowPrefixes() {
+  listEl.querySelectorAll('.p4-step-prefix').forEach(el => {
+    const step = parseInt(el.dataset.p4step, 10);
+    if (p4GcResult) {
+      el.textContent = p4GcResult[step - 1].replace(/^[①-⑦]/, '').trim();
+      el.classList.add('resolved');
+    } else {
+      el.textContent = '';
+      el.classList.remove('resolved');
+    }
+  });
+}
+
+function syncPanelPositions() {
+  const p4Visible  = !document.getElementById('p4Float').classList.contains('hidden');
+  const recVisible = !document.getElementById('recordFloat').classList.contains('hidden');
+  document.getElementById('recordFloat').classList.toggle('below-p4', p4Visible && recVisible);
+}
+
+// 時間記録パネル ドラッグ移動
+(function() {
+  const panel = document.getElementById('recordFloat');
+  const header = panel.querySelector('.record-float-header');
+  let dragging = false, startX, startY, origLeft, origTop;
+
+  function onStart(e) {
+    if (e.target.id === 'btnRecordClose') return;
+    dragging = true;
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    const rect = panel.getBoundingClientRect();
+    origLeft = rect.left;
+    origTop  = rect.top;
+    panel.style.right     = 'auto';
+    panel.style.top       = origTop  + 'px';
+    panel.style.left      = origLeft + 'px';
+    panel.style.transform = 'none';
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const touch = e.touches ? e.touches[0] : e;
+    panel.style.left = (origLeft + touch.clientX - startX) + 'px';
+    panel.style.top  = (origTop  + touch.clientY - startY) + 'px';
+  }
+  function onEnd() { dragging = false; }
+
+  header.addEventListener('mousedown',  onStart);
+  header.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup',  onEnd);
+  document.addEventListener('touchend', onEnd);
+})();
+
+// P4パネル ドラッグ移動
+(function() {
+  const panel = document.getElementById('p4Float');
+  const header = panel.querySelector('.p4-float-header');
+  let dragging = false, startX, startY, origLeft, origTop;
+
+  function onStart(e) {
+    if (e.target.id === 'btnP4Close') return;
+    dragging = true;
+    const touch = e.touches ? e.touches[0] : e;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    const rect = panel.getBoundingClientRect();
+    origLeft = rect.left;
+    origTop  = rect.top;
+    panel.style.right = 'auto';
+    panel.style.left = origLeft + 'px';
+    panel.style.top  = origTop  + 'px';
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const touch = e.touches ? e.touches[0] : e;
+    panel.style.left = (origLeft + touch.clientX - startX) + 'px';
+    panel.style.top  = (origTop  + touch.clientY - startY) + 'px';
+  }
+  function onEnd() { dragging = false; }
+
+  header.addEventListener('mousedown',  onStart);
+  header.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup',  onEnd);
+  document.addEventListener('touchend', onEnd);
+})();
+
+document.getElementById('btnP4Toggle').addEventListener('click', () => {
+  document.getElementById('p4Float').classList.remove('hidden');
+  syncPanelPositions();
+});
+document.getElementById('btnP4Close').addEventListener('click', () => {
+  document.getElementById('p4Float').classList.add('hidden');
+  syncPanelPositions();
+});
+
+document.getElementById('btnP4Star').addEventListener('click', () => {
+  p4GcResult = computeP4GcResult();
+  const ol = document.createElement('ol');
+  p4GcResult.forEach(text => {
+    const li = document.createElement('li');
+    li.textContent = text;
+    ol.appendChild(li);
+  });
+  const resultEl = document.getElementById('p4GcResult');
+  resultEl.innerHTML = '';
+  resultEl.appendChild(ol);
+  p4UpdateRowPrefixes();
+});
+
+document.getElementById('btnP4Clear').addEventListener('click', () => {
+  p4State.gc1 = { true: true, early: true };
+  p4State.gc2 = { true: true };
+  p4State.t1  = { isHonoo: true, true: true };
+  p4State.t2  = { true: true };
+  p4GcResult = null;
+  p4RenderAll();
+  document.getElementById('p4GcResult').innerHTML = '<div class="p4-placeholder">★を押すと正解が表示されます</div>';
+  p4UpdateRowPrefixes();
+});
+
+p4RenderAll();
 
 updateUI();
 
