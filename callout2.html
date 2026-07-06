@@ -594,7 +594,7 @@ const STRUCTURE = [
           { at: 793.5,  label: 'ビームみる' },
           { at: 797.0,  label: '', p4step: 2 },
           { at: 803.4,  label: '加速度注意、', p4step: 1 },
-          { at: 809.2,  label: '視線持ち中央、', p4step: 3 },
+          { at: 809.6,  label: '視線持ち中央、', p4step: 3 },
           { at: 814.6,  label: 'サンダガ覚える' },
           { at: 821.1,  label: '真ん中集合、アルファ見る'},
           { at: 822.6,  label: 'ほのお、', p4step: 4 },
@@ -602,8 +602,8 @@ const STRUCTURE = [
           { at: 831.8,  label: '加速度注意、', p4step: 1 },
           { at: 833.3,  label: 'ブリザガ覚える'},
           { at: 835.4,  label: '視線持ち中央、', p4step: 6 },
+          { at: 839.0,  label: 'チャージ', p4step: 8 },
           { at: 843.0,  label: '真ん中集合、つなみ、', p4step: 7 },
-          { at: 844.0,  label: 'チャージ', p4step: 8 },
           { at: 859.3,  label: '全体' },
         ]
       }
@@ -1143,7 +1143,7 @@ let p4McResult = null; // null=未確定, string=確定済み
 
 const P4_CIRCLED = ['①','②','③','④','⑤','⑥','⑦'];
 
-function p4WaterCallText(isTrue) { return isTrue ? 'つぎ 水集合,雷散開' : 'つぎ 水散開,雷集合'; }
+function p4WaterCallText(isTrue) { return isTrue ? '雷散開' : '水散開'; }
 function p4LosCallText(isTrue) { return isTrue ? 'みない' : 'みる'; }
 function p4ZoneCallTextFire(isTrue)  { return isTrue ? '円範囲' : 'ドーナツ'; }
 function p4ZoneCallTextWater(isTrue) { return isTrue ? 'ドーナツ' : '円範囲'; }
