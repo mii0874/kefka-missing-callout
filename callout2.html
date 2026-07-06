@@ -464,6 +464,9 @@
     <div class="p4-row" id="p4mc-thunder-row"></div>
     <div class="p4-row" id="p4mc-blizzard-row"></div>
   </div>
+  <div class="p4-action-row">
+    <button class="p4-act p4-btn-star" id="btnP4McStar">★ MC正解</button>
+  </div>
 
   <div class="p4-room-area">
     <div class="p4-room-row">
@@ -586,18 +589,21 @@ const STRUCTURE = [
 //          { at: 763.4,  label: 'つなみほのお' },
 //          { at: 768.3,  label: 'グランドクロス' },
 //          { at: 770.1,  label: 'つなみほのお' },
-          { at: 785.0,  label: '', p4step: 1 },
-          { at: 789.0,  label: '黄色反対 黒同じ' },
+          { at: 775.0,  label: '', p4step: 1, p4accel: true },
+          { at: 789.0,  label: '黄色反対' },
           { at: 793.5,  label: 'ビームみる' },
           { at: 797.0,  label: '', p4step: 2 },
-          { at: 803.4,  label: '加速度注意', p4step: 1 },
-          { at: 809.2,  label: '視線持ち中央 ', p4step: 3 },
+          { at: 803.4,  label: '加速度注意、', p4step: 1 },
+          { at: 809.2,  label: '視線持ち中央、', p4step: 3 },
           { at: 814.6,  label: 'サンダガ覚える' },
-          { at: 821.1,  label: '真ん中集合 アルファ見る この後ほのお ', p4step: 4 },
+          { at: 821.1,  label: '真ん中集合、アルファ見る'},
+          { at: 822.6,  label: 'ほのお、', p4step: 4 },
           { at: 828.0,  label: '', p4step: 5 },
-          { at: 831.8,  label: '加速度注意 ブリザガ覚える ', p4step: 1 },
-          { at: 835.4,  label: '視線持ち中央 ', p4step: 6 },
-          { at: 844.9,  label: '真ん中集合 この後つなみ ', p4step: 7 },
+          { at: 831.8,  label: '加速度注意、', p4step: 1 },
+          { at: 833.3,  label: 'ブリザガ覚える'},
+          { at: 835.4,  label: '視線持ち中央、', p4step: 6 },
+          { at: 844.9,  label: '真ん中集合、つなみ、', p4step: 7 },
+          { at: 844.9,  label: 'チャージ', p4step: 8 },
           { at: 859.3,  label: '全体' },
         ]
       }
@@ -1017,11 +1023,15 @@ function tick(ts) {
       spokenSet.add(ev.id);
       const displayText = buildP4DisplayText(ev);
       currentCallout = displayText;
-      if (ev.p4step && p4GcResult) {
+      if (ev.p4step === 8 && p4McResult) {
+        const base = ev.label.replace(/★/g, '');
+        const stepText = p4McResult.replace(/^⑧/, '').trim();
+        speak((base ? base + ' ' : '') + stepText);
+      } else if (ev.p4step && p4GcResult) {
         const base = ev.label.replace(/★/g, '');
         const stepText = p4GcResult[ev.p4step - 1].replace(/^[①-⑦]/, '').trim();
-        if (base) speak(base);
-        speak(stepText, 2.0);
+        const prefix = ev.p4accel ? '加速度全員 ' : '';
+        speak(prefix + (base ? base + ' ' : '') + stepText);
       } else {
         speak(ev.label.replace(/★/g, ''));
       }
@@ -1129,10 +1139,11 @@ const p4State = {
 };
 
 let p4GcResult = null; // null=未確定, array=確定済み
+let p4McResult = null; // null=未確定, string=確定済み
 
 const P4_CIRCLED = ['①','②','③','④','⑤','⑥','⑦'];
 
-function p4WaterCallText(isTrue) { return isTrue ? 'つぎ水雷ほんとう' : 'つぎ水雷ぎゃく'; }
+function p4WaterCallText(isTrue) { return isTrue ? 'つぎ 水集合,雷散開' : 'つぎ 水散開,雷集合'; }
 function p4LosCallText(isTrue) { return isTrue ? 'みない' : 'みる'; }
 function p4ZoneCallTextFire(isTrue)  { return isTrue ? '円範囲' : 'ドーナツ'; }
 function p4ZoneCallTextWater(isTrue) { return isTrue ? 'ドーナツ' : '円範囲'; }
@@ -1155,7 +1166,22 @@ function computeP4GcResult() {
   ];
 }
 
+function computeP4McResult() {
+  const t = p4State.mc.thunder  ? 'ほんとう' : 'うそ';
+  const b = p4State.mc.blizzard ? 'ほんとう' : 'うそ';
+  return `⑧${t}、${b}`;
+}
+
+function p4ShowMcResultFromData(data) {
+  p4McResult = data || null;
+  p4UpdateRowPrefixes();
+}
+
 function buildP4DisplayText(ev) {
+  if (ev.p4step === 8 && p4McResult) {
+    const stepText = p4McResult.replace(/^⑧/, '').trim();
+    return ev.label ? ev.label + ' ' + stepText : stepText;
+  }
   if (ev.p4step && p4GcResult) {
     const stepText = p4GcResult[ev.p4step - 1].replace(/^[①-⑦]/, '').trim();
     return ev.label ? ev.label + ' ' + stepText : stepText;
@@ -1165,6 +1191,10 @@ function buildP4DisplayText(ev) {
 
 function buildP4SpokenText(ev) {
   let base = ev.label.replace(/★/g, '');
+  if (ev.p4step === 8 && p4McResult) {
+    const stepText = p4McResult.replace(/^⑧/, '').trim();
+    return base ? base + ' ' + stepText : stepText;
+  }
   if (ev.p4step && p4GcResult) {
     const stepText = p4GcResult[ev.p4step - 1].replace(/^[①-⑦]/, '').trim();
     return base ? base + ' ' + stepText : stepText;
@@ -1246,12 +1276,22 @@ function p4RenderAll() {
 function p4UpdateRowPrefixes() {
   listEl.querySelectorAll('.p4-step-prefix').forEach(el => {
     const step = parseInt(el.dataset.p4step, 10);
-    if (p4GcResult) {
-      el.textContent = p4GcResult[step - 1].replace(/^[①-⑦]/, '').trim();
-      el.classList.add('resolved');
+    if (step === 8) {
+      if (p4McResult) {
+        el.textContent = p4McResult.replace(/^⑧/, '').trim();
+        el.classList.add('resolved');
+      } else {
+        el.textContent = '';
+        el.classList.remove('resolved');
+      }
     } else {
-      el.textContent = '';
-      el.classList.remove('resolved');
+      if (p4GcResult) {
+        el.textContent = p4GcResult[step - 1].replace(/^[①-⑦]/, '').trim();
+        el.classList.add('resolved');
+      } else {
+        el.textContent = '';
+        el.classList.remove('resolved');
+      }
     }
   });
 }
@@ -1381,6 +1421,21 @@ function p4ShowResultFromData(data) {
   p4UpdateRowPrefixes();
 }
 
+let fbMcListener = null;
+
+function fbConnectMc(roomKey) {
+  if (fbMcListener) fbMcListener.off();
+  const ref = fbDb.ref(`rooms/${roomKey}/p4mcresult`);
+  fbMcListener = ref;
+  ref.on('value', snap => { p4ShowMcResultFromData(snap.val()); });
+}
+
+function fbWriteMcResult(result) {
+  const roomKey = localStorage.getItem(LS_ROOMKEY);
+  if (!roomKey) return;
+  fbDb.ref(`rooms/${roomKey}/p4mcresult`).set(result);
+}
+
 function fbConnect(roomKey) {
   if (fbListener) fbListener.off();
   const ref = fbDb.ref(`rooms/${roomKey}/p4result`);
@@ -1394,7 +1449,8 @@ function fbConnect(roomKey) {
 }
 
 function fbDisconnect() {
-  if (fbListener) { fbListener.off(); fbListener = null; }
+  if (fbListener)   { fbListener.off();   fbListener   = null; }
+  if (fbMcListener) { fbMcListener.off(); fbMcListener = null; }
   setRoomStatus('', '');
 }
 
@@ -1416,6 +1472,7 @@ function setRoomStatus(msg, cls) {
   if (saved) {
     document.getElementById('p4RoomKeyInput').value = saved;
     fbConnect(saved);
+    fbConnectMc(saved);
   }
 })();
 
@@ -1424,6 +1481,7 @@ document.getElementById('btnP4RoomSet').addEventListener('click', () => {
   if (!key) return;
   localStorage.setItem(LS_ROOMKEY, key);
   fbConnect(key);
+  fbConnectMc(key);
 });
 document.getElementById('btnP4RoomClear').addEventListener('click', () => {
   localStorage.removeItem(LS_ROOMKEY);
@@ -1434,9 +1492,18 @@ document.getElementById('btnP4RoomClear').addEventListener('click', () => {
 document.getElementById('btnP4Star').addEventListener('click', () => {
   const result = computeP4GcResult();
   if (localStorage.getItem(LS_ROOMKEY)) {
-    fbWriteResult(result);  // Firebase経由で全員に反映
+    fbWriteResult(result);
   } else {
-    p4ShowResultFromData(result);  // ローカルのみ
+    p4ShowResultFromData(result);
+  }
+});
+
+document.getElementById('btnP4McStar').addEventListener('click', () => {
+  const result = computeP4McResult();
+  if (localStorage.getItem(LS_ROOMKEY)) {
+    fbWriteMcResult(result);
+  } else {
+    p4ShowMcResultFromData(result);
   }
 });
 
@@ -1448,9 +1515,11 @@ document.getElementById('btnP4Clear').addEventListener('click', () => {
   p4State.mc  = { thunder: true, blizzard: true };
   p4RenderAll();
   if (localStorage.getItem(LS_ROOMKEY)) {
-    fbWriteResult(null);  // Firebase経由で全員クリア
+    fbWriteResult(null);
+    fbWriteMcResult(null);
   } else {
-    p4ShowResultFromData(null);  // ローカルのみ
+    p4ShowResultFromData(null);
+    p4ShowMcResultFromData(null);
   }
 });
 
