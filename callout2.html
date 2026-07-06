@@ -369,6 +369,18 @@
     transform: none;
   }
 
+  /* ルームキーエリア */
+  .p4-room-area { border-top: 1px solid #2a4a6a; padding-top: 8px; }
+  .p4-room-row { display: flex; gap: 4px; align-items: center; }
+  .p4-room-row input {
+    flex: 1; background: #0f1a26; color: #c8d8e8;
+    border: 1px solid #3a5a7a; border-radius: 4px;
+    padding: 4px 6px; font-size: 0.72rem; min-width: 0;
+  }
+  .p4-room-status { font-size: 0.68rem; margin-top: 4px; color: #5a7a9a; }
+  .p4-room-status.connected { color: #60c0a0; }
+  .p4-room-status.error { color: #e87060; }
+
   /* イベント行のp4stepプレフィックス */
   .p4-step-prefix {
     font-size: 0.8rem;
@@ -379,6 +391,8 @@
   }
   .p4-step-prefix.resolved { color: #ffffaa; }
 </style>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -449,6 +463,15 @@
   <div class="p4-rows" id="p4McRows">
     <div class="p4-row" id="p4mc-thunder-row"></div>
     <div class="p4-row" id="p4mc-blizzard-row"></div>
+  </div>
+
+  <div class="p4-room-area">
+    <div class="p4-room-row">
+      <input id="p4RoomKeyInput" type="text" placeholder="ルームキー" autocomplete="off" />
+      <button id="btnP4RoomSet" class="p4-act p4-btn-star" style="flex:none;padding:4px 8px;font-size:0.72rem;">セット</button>
+      <button id="btnP4RoomClear" class="p4-act p4-btn-clear" style="flex:none;padding:4px 8px;font-size:0.72rem;">解除</button>
+    </div>
+    <div id="p4RoomStatus" class="p4-room-status"></div>
   </div>
 </div>
 
@@ -563,15 +586,16 @@ const STRUCTURE = [
 //          { at: 763.4,  label: 'つなみほのお' },
 //          { at: 768.3,  label: 'グランドクロス' },
 //          { at: 770.1,  label: 'つなみほのお' },
-          { at: 790.0,  label: '', p4step: 1 },
-          { at: 794.5,  label: 'ビームみる' },
-          { at: 796.0,  label: '', p4step: 2 },
-          { at: 803.4,  label: '加速度注意' },
+          { at: 785.0,  label: '', p4step: 1 },
+          { at: 789.0,  label: '黄色反対 黒同じ' },
+          { at: 793.5,  label: 'ビームみる' },
+          { at: 797.0,  label: '', p4step: 2 },
+          { at: 803.4,  label: '加速度注意', p4step: 1 },
           { at: 809.2,  label: '視線持ち中央 ', p4step: 3 },
           { at: 814.6,  label: 'サンダガ覚える' },
           { at: 821.1,  label: '真ん中集合 アルファ見る この後ほのお ', p4step: 4 },
           { at: 828.0,  label: '', p4step: 5 },
-          { at: 831.8,  label: '加速度注意 ブリザガ覚える' },
+          { at: 831.8,  label: '加速度注意 ブリザガ覚える ', p4step: 1 },
           { at: 835.4,  label: '視線持ち中央 ', p4step: 6 },
           { at: 844.9,  label: '真ん中集合 この後つなみ ', p4step: 7 },
           { at: 859.3,  label: '全体' },
@@ -1119,8 +1143,8 @@ function computeP4GcResult() {
   const honooInst   = p4State.t1.isHonoo ? p4State.t1 : p4State.t2;
   const tsunamiInst = p4State.t1.isHonoo ? p4State.t2 : p4State.t1;
   return [
-    (p4State.gc1.true && p4State.gc2.true)   ? '①加速度全部とまる' :
-    (!p4State.gc1.true && !p4State.gc2.true) ? '①加速度全部うごく' :
+    (p4State.gc1.true && p4State.gc2.true)   ? '①とまる' :
+    (!p4State.gc1.true && !p4State.gc2.true) ? '①うごく' :
                                                '①',
     '②' + p4WaterCallText(earlyGc.true),
     '③' + p4LosCallText(p4State.gc1.true),
@@ -1320,18 +1344,100 @@ document.getElementById('btnP4Close').addEventListener('click', () => {
   syncPanelPositions();
 });
 
-document.getElementById('btnP4Star').addEventListener('click', () => {
-  p4GcResult = computeP4GcResult();
-  const ol = document.createElement('ol');
-  p4GcResult.forEach(text => {
-    const li = document.createElement('li');
-    li.textContent = text;
-    ol.appendChild(li);
-  });
+// =====================
+// Firebase 同期
+// =====================
+const FB_CONFIG = {
+  apiKey: "AIzaSyAjqbtns7CrD4H6F9MgL9PR2hIWI04h5DI",
+  authDomain: "project-4055582307686904714.firebaseapp.com",
+  databaseURL: "https://project-4055582307686904714-default-rtdb.firebaseio.com",
+  projectId: "project-4055582307686904714",
+  storageBucket: "project-4055582307686904714.firebasestorage.app",
+  messagingSenderId: "337209690683",
+  appId: "1:337209690683:web:19f4075a2bb93f42236a1e",
+};
+firebase.initializeApp(FB_CONFIG);
+const fbDb = firebase.database();
+
+const LS_ROOMKEY = 'callout2.roomKey';
+let fbListener = null;
+
+function p4ShowResultFromData(data) {
   const resultEl = document.getElementById('p4GcResult');
-  resultEl.innerHTML = '';
-  resultEl.appendChild(ol);
+  if (data) {
+    p4GcResult = data;
+    const ol = document.createElement('ol');
+    data.forEach(text => {
+      const li = document.createElement('li');
+      li.textContent = text;
+      ol.appendChild(li);
+    });
+    resultEl.innerHTML = '';
+    resultEl.appendChild(ol);
+  } else {
+    p4GcResult = null;
+    resultEl.innerHTML = '<div class="p4-placeholder">★を押すと正解が表示されます</div>';
+  }
   p4UpdateRowPrefixes();
+}
+
+function fbConnect(roomKey) {
+  if (fbListener) fbListener.off();
+  const ref = fbDb.ref(`rooms/${roomKey}/p4result`);
+  fbListener = ref;
+  ref.on('value', snap => {
+    p4ShowResultFromData(snap.val());
+  }, err => {
+    setRoomStatus('接続エラー: ' + err.message, 'error');
+  });
+  setRoomStatus(`接続中: ${roomKey}`, 'connected');
+}
+
+function fbDisconnect() {
+  if (fbListener) { fbListener.off(); fbListener = null; }
+  setRoomStatus('', '');
+}
+
+function fbWriteResult(result) {
+  const roomKey = localStorage.getItem(LS_ROOMKEY);
+  if (!roomKey) return;
+  fbDb.ref(`rooms/${roomKey}/p4result`).set(result);
+}
+
+function setRoomStatus(msg, cls) {
+  const el = document.getElementById('p4RoomStatus');
+  el.textContent = msg;
+  el.className = 'p4-room-status' + (cls ? ' ' + cls : '');
+}
+
+// 起動時にルームキー復元
+(function() {
+  const saved = localStorage.getItem(LS_ROOMKEY);
+  if (saved) {
+    document.getElementById('p4RoomKeyInput').value = saved;
+    fbConnect(saved);
+  }
+})();
+
+document.getElementById('btnP4RoomSet').addEventListener('click', () => {
+  const key = document.getElementById('p4RoomKeyInput').value.trim();
+  if (!key) return;
+  localStorage.setItem(LS_ROOMKEY, key);
+  fbConnect(key);
+});
+document.getElementById('btnP4RoomClear').addEventListener('click', () => {
+  localStorage.removeItem(LS_ROOMKEY);
+  document.getElementById('p4RoomKeyInput').value = '';
+  fbDisconnect();
+});
+
+document.getElementById('btnP4Star').addEventListener('click', () => {
+  const result = computeP4GcResult();
+  if (localStorage.getItem(LS_ROOMKEY)) {
+    fbWriteResult(result);  // Firebase経由で全員に反映
+  } else {
+    p4ShowResultFromData(result);  // ローカルのみ
+  }
 });
 
 document.getElementById('btnP4Clear').addEventListener('click', () => {
@@ -1339,10 +1445,13 @@ document.getElementById('btnP4Clear').addEventListener('click', () => {
   p4State.gc2 = { true: true };
   p4State.t1  = { isHonoo: true, true: true };
   p4State.t2  = { true: true };
-  p4GcResult = null;
+  p4State.mc  = { thunder: true, blizzard: true };
   p4RenderAll();
-  document.getElementById('p4GcResult').innerHTML = '<div class="p4-placeholder">★を押すと正解が表示されます</div>';
-  p4UpdateRowPrefixes();
+  if (localStorage.getItem(LS_ROOMKEY)) {
+    fbWriteResult(null);  // Firebase経由で全員クリア
+  } else {
+    p4ShowResultFromData(null);  // ローカルのみ
+  }
 });
 
 p4RenderAll();
