@@ -1694,6 +1694,10 @@ document.getElementById('btnP4Clear').addEventListener('click', () => {
 
 p4RenderAll();
 
+// P4パネルの初期表示位置をP4ボタンの上辺に揃える
+document.getElementById('p4Float').style.top =
+  document.getElementById('btnP4Toggle').getBoundingClientRect().top + 'px';
+
 updateUI();
 
 // ファイルタイムスタンプ表示
