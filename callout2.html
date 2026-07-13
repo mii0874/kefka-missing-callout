@@ -296,7 +296,23 @@
   }
   #btnP4Close:hover { color: #c8d8e8; opacity: 1; }
 
-  .p4-float h2 { font-size: 0.78rem; color: #ffffaa; }
+  .p4-sec-header {
+    font-size: 0.78rem;
+    color: #ffffaa;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .p4-sec-toggle {
+    display: inline-block;
+    font-size: 0.65rem;
+    transition: transform 0.15s;
+  }
+  .p4-collapse.collapsed .p4-sec-toggle { transform: rotate(-90deg); }
+  .p4-collapse.collapsed .p4-sec-body { display: none; }
+  .p4-sec-body { display: flex; flex-direction: column; gap: 8px; }
 
   .p4-rows { display: flex; flex-direction: column; gap: 4px; }
   .p4-row {
@@ -458,74 +474,82 @@
     <button id="btnP4Close">×</button>
   </div>
 
-  <h2>グランドクロス〜つなみ/ほのお</h2>
-  <div id="p4GcArea">
-    <div class="p4gc-card">
-      <div class="p4gc-lbl-row"><span class="p4gc-lbl">GC ①</span><div class="p4gctf-wrap" id="p4gc1-tf"></div></div>
-      <div class="p4-row p4-row-inner" id="p4t1-row"></div>
-      <div class="p4gc-grid">
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">水</div>
-          <button class="p4gcb" data-g="wt" data-gc="1" data-t="水" data-s="早" data-k="水">50</button>
-          <button class="p4gcb" data-g="wt" data-gc="1" data-t="水" data-s="遅" data-k="水">1m</button>
+  <div class="p4-collapse" id="p4SecGc">
+    <h2 class="p4-sec-header"><span class="p4-sec-toggle">▾</span>グランドクロス〜つなみ/ほのお</h2>
+    <div class="p4-sec-body">
+      <div id="p4GcArea">
+        <div class="p4gc-card">
+          <div class="p4gc-lbl-row"><span class="p4gc-lbl">GC ①</span><div class="p4gctf-wrap" id="p4gc1-tf"></div></div>
+          <div class="p4-row p4-row-inner" id="p4t1-row"></div>
+          <div class="p4gc-grid">
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">水</div>
+              <button class="p4gcb" data-g="wt" data-gc="1" data-t="水" data-s="早" data-k="水">50</button>
+              <button class="p4gcb" data-g="wt" data-gc="1" data-t="水" data-s="遅" data-k="水">1m</button>
+            </div>
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">雷</div>
+              <button class="p4gcb" data-g="wt" data-gc="1" data-t="雷" data-s="早" data-k="雷">50</button>
+              <button class="p4gcb" data-g="wt" data-gc="1" data-t="雷" data-s="遅" data-k="雷">1m</button>
+            </div>
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">爆弾</div>
+              <button class="p4gcb" data-g="bomb" data-gc="1" data-s="早" data-k="爆弾">50</button>
+              <button class="p4gcb" data-g="bomb" data-gc="1" data-s="遅" data-k="爆弾">1m</button>
+            </div>
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">視線</div>
+              <button class="p4gcb" data-g="gaze" data-gc="1" data-s="早" data-k="視線">50</button>
+              <button class="p4gcb p4gc-phantom" tabindex="-1" aria-hidden="true">&nbsp;</button>
+            </div>
+          </div>
         </div>
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">雷</div>
-          <button class="p4gcb" data-g="wt" data-gc="1" data-t="雷" data-s="早" data-k="雷">50</button>
-          <button class="p4gcb" data-g="wt" data-gc="1" data-t="雷" data-s="遅" data-k="雷">1m</button>
-        </div>
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">爆弾</div>
-          <button class="p4gcb" data-g="bomb" data-gc="1" data-s="早" data-k="爆弾">50</button>
-          <button class="p4gcb" data-g="bomb" data-gc="1" data-s="遅" data-k="爆弾">1m</button>
-        </div>
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">視線</div>
-          <button class="p4gcb" data-g="gaze" data-gc="1" data-s="早" data-k="視線">50</button>
-          <button class="p4gcb p4gc-phantom" tabindex="-1" aria-hidden="true">&nbsp;</button>
+        <div class="p4gc-card">
+          <div class="p4gc-lbl-row"><span class="p4gc-lbl">GC ②</span><div class="p4gctf-wrap" id="p4gc2-tf"></div></div>
+          <div class="p4-row p4-row-inner" id="p4t2-row"></div>
+          <div class="p4gc-grid">
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">水</div>
+              <button class="p4gcb" data-g="wt" data-gc="2" data-t="水" data-s="早" data-k="水">35</button>
+              <button class="p4gcb" data-g="wt" data-gc="2" data-t="水" data-s="遅" data-k="水">1m</button>
+            </div>
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">雷</div>
+              <button class="p4gcb" data-g="wt" data-gc="2" data-t="雷" data-s="早" data-k="雷">35</button>
+              <button class="p4gcb" data-g="wt" data-gc="2" data-t="雷" data-s="遅" data-k="雷">1m</button>
+            </div>
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">爆弾</div>
+              <button class="p4gcb" data-g="bomb" data-gc="2" data-s="早" data-k="爆弾">35</button>
+              <button class="p4gcb" data-g="bomb" data-gc="2" data-s="遅" data-k="爆弾">1m</button>
+            </div>
+            <div class="p4gc-col">
+              <div class="p4gc-hdr">視線</div>
+              <button class="p4gcb p4gc-phantom" tabindex="-1" aria-hidden="true">&nbsp;</button>
+              <button class="p4gcb" data-g="gaze" data-gc="2" data-s="遅" data-k="視線">1m</button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="p4gc-card">
-      <div class="p4gc-lbl-row"><span class="p4gc-lbl">GC ②</span><div class="p4gctf-wrap" id="p4gc2-tf"></div></div>
-      <div class="p4-row p4-row-inner" id="p4t2-row"></div>
-      <div class="p4gc-grid">
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">水</div>
-          <button class="p4gcb" data-g="wt" data-gc="2" data-t="水" data-s="早" data-k="水">35</button>
-          <button class="p4gcb" data-g="wt" data-gc="2" data-t="水" data-s="遅" data-k="水">1m</button>
-        </div>
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">雷</div>
-          <button class="p4gcb" data-g="wt" data-gc="2" data-t="雷" data-s="早" data-k="雷">35</button>
-          <button class="p4gcb" data-g="wt" data-gc="2" data-t="雷" data-s="遅" data-k="雷">1m</button>
-        </div>
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">爆弾</div>
-          <button class="p4gcb" data-g="bomb" data-gc="2" data-s="早" data-k="爆弾">35</button>
-          <button class="p4gcb" data-g="bomb" data-gc="2" data-s="遅" data-k="爆弾">1m</button>
-        </div>
-        <div class="p4gc-col">
-          <div class="p4gc-hdr">視線</div>
-          <button class="p4gcb p4gc-phantom" tabindex="-1" aria-hidden="true">&nbsp;</button>
-          <button class="p4gcb" data-g="gaze" data-gc="2" data-s="遅" data-k="視線">1m</button>
-        </div>
+      <div class="p4-action-row">
+        <button class="p4-act p4-btn-star" id="btnP4Star">★ 正解</button>
+        <button class="p4-act p4-btn-clear" id="btnP4Clear">クリア</button>
       </div>
+      <div class="p4-result" id="p4GcResult"><div class="p4-placeholder">★を押すと正解が表示されます</div></div>
     </div>
   </div>
-  <div class="p4-action-row">
-    <button class="p4-act p4-btn-star" id="btnP4Star">★ 正解</button>
-    <button class="p4-act p4-btn-clear" id="btnP4Clear">クリア</button>
-  </div>
-  <div class="p4-result" id="p4GcResult"><div class="p4-placeholder">★を押すと正解が表示されます</div></div>
 
-  <h2>マジックチャージ</h2>
-  <div class="p4-rows" id="p4McRows">
-    <div class="p4-row" id="p4mc-thunder-row"></div>
-    <div class="p4-row" id="p4mc-blizzard-row"></div>
-  </div>
-  <div class="p4-action-row">
-    <button class="p4-act p4-btn-star" id="btnP4McStar">★ MC正解</button>
+  <div class="p4-collapse" id="p4SecMc">
+    <h2 class="p4-sec-header"><span class="p4-sec-toggle">▾</span>マジックチャージ</h2>
+    <div class="p4-sec-body">
+      <div class="p4-rows" id="p4McRows">
+        <div class="p4-row" id="p4mc-thunder-row"></div>
+        <div class="p4-row" id="p4mc-blizzard-row"></div>
+      </div>
+      <div class="p4-action-row">
+        <button class="p4-act p4-btn-star" id="btnP4McStar">★ MC正解</button>
+      </div>
+    </div>
   </div>
 
   <div class="p4-room-area">
@@ -1510,6 +1534,12 @@ function syncPanelPositions() {
   document.addEventListener('mouseup',  onEnd);
   document.addEventListener('touchend', onEnd);
 })();
+
+document.querySelectorAll('.p4-sec-header').forEach(h => {
+  h.addEventListener('click', () => {
+    h.closest('.p4-collapse').classList.toggle('collapsed');
+  });
+});
 
 document.getElementById('btnP4Toggle').addEventListener('click', () => {
   document.getElementById('p4Float').classList.remove('hidden');
