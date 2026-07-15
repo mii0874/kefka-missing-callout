@@ -310,6 +310,7 @@
     font-size: 0.65rem;
     transition: transform 0.15s;
   }
+  .p4-collapse { display: flex; flex-direction: column; gap: 6px; }
   .p4-collapse.collapsed .p4-sec-toggle { transform: rotate(-90deg); }
   .p4-collapse.collapsed .p4-sec-body { display: none; }
   .p4-sec-body { display: flex; flex-direction: column; gap: 8px; }
@@ -416,6 +417,18 @@
   .p4-dyn-label.resolved {
     color: #ffffaa;
     font-weight: bold;
+  }
+
+  /* 本番ドメイン以外での実行を示す透かし */
+  body.dev-mode-bg::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.07;
+    background-repeat: repeat;
+    background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='240'%20height='140'%3E%3Ctext%20x='6'%20y='80'%20font-size='26'%20font-family='Helvetica%20Neue,%20sans-serif'%20font-weight='bold'%20fill='%23ffffff'%20transform='rotate(-24%20120%2070)'%3EDEV%20MODE%3C/text%3E%3C/svg%3E");
   }
 
 </style>
@@ -563,6 +576,11 @@
 </div>
 
 <script>
+// 本番ドメイン以外（ローカルファイル実行など）では透かしを表示
+if (location.hostname !== 'mii0874.github.io') {
+  document.body.classList.add('dev-mode-bg');
+}
+
 // =====================
 // イベント構造定義
 // =====================
@@ -669,10 +687,7 @@ const STRUCTURE = [
         label: '開幕', at: 740,
         events: [
           { at: 744.9,  label: 'おちょくりソウル★' },
-//          { at: 751.6,  label: 'グランドクロス' },
-//          { at: 763.4,  label: 'つなみほのお' },
-//          { at: 768.3,  label: 'グランドクロス' },
-//          { at: 770.1,  label: 'つなみほのお' },
+          { at: 785.8,  label: 'マーク{{⓪}}' },
           { at: 789.0,  label: '黄色反対' },
           { at: 793.5,  label: 'ビームみる' },
           { at: 797.0,  label: '{{①}}' },         //①水雷
@@ -1282,10 +1297,10 @@ document.querySelectorAll('.p4gcb').forEach(b => {
   });
 });
 
-let p4GcResult = null; // null=未確定, array[9]=確定済み
+let p4GcResult = null; // null=未確定, array[11]=確定済み
 let p4McResult = null; // null=未確定, string=確定済み
 
-const P4_CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+const P4_CIRCLED = ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 
 function computeP4Steps() {
   const wt   = gcSel.wt;
@@ -1344,7 +1359,12 @@ function computeP4Steps() {
   // ⑩: 波の回
   const s10 = tsunamiInst.true ? 'ドーナツ' : '円範囲';
 
-  return [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10];
+  // ⓪: ①が散開なら1、⑥が散開なら2、どちらでもなければなし
+  let s0 = 'なし';
+  if (s1.includes('散開')) s0 = '1';
+  else if (s6.includes('散開')) s0 = '2';
+
+  return [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10];
 }
 
 function computeP4McResult() {
