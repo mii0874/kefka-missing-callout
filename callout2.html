@@ -131,6 +131,57 @@
   #btnAutoScroll { background: #1e3d5a; color: #aac8e8; }
   #btnAutoScroll.off { background: #1e3d5a; color: #aac8e8; }
 
+  /* コントロール横のP4ミニ表示 */
+  .ctrl-area { display: flex; gap: 6px; align-items: stretch; }
+  .ctrl-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .p4-mini {
+    flex: 0 0 auto;
+    width: 98px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #131f2e;
+    border-radius: 8px;
+    padding: 1px 5px;
+  }
+  .p4mini-group { display: flex; flex-direction: column; gap: 2px; padding: 1px 0; }
+  .p4mini-group + .p4mini-group { border-top: 1px solid #223349; }
+  .p4mini-row { display: flex; align-items: center; gap: 4px; min-height: 20px; }
+
+  .p4mini-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    background: #1a2d42;
+    flex-shrink: 0;
+  }
+  .p4mini-chip .icon { position: relative; z-index: 2; width: 15px; height: 15px; display: block; }
+  .p4mini-chip .icon svg { width: 100%; height: 100%; display: block; }
+  .p4mini-chip .prohibit {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.72;
+  }
+  .p4mini-chip .prohibit svg { width: 100%; height: 100%; display: block; }
+
+  .p4mini-gaze {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.7rem;
+    color: #c8d8e8;
+    white-space: nowrap;
+  }
+  .p4mini-gaze .eye { width: 15px; height: 15px; filter: grayscale(1); opacity: 0.4; }
+  .p4mini-gaze .eye svg { width: 100%; height: 100%; display: block; }
+  .p4mini-gaze.active .eye { filter: none; opacity: 1; }
+
   .file-stamp {
     font-size: 0.7rem;
     color: #3a5a7a;
@@ -443,19 +494,33 @@
     <div class="timer" id="timer">0:00</div>
     <div class="callout-box" id="callout">—</div>
   </div>
-  <div class="ctrl-bar">
-    <button id="btnRew">&lt;&lt;</button>
-    <button id="btnStart">▶ 開始</button>
-    <button id="btnAdv">&gt;&gt;</button>
-    <button id="btnStop">⏸</button>
-    <button id="btnReset">↺</button>
-  </div>
-  <div class="sub-bar">
-    <select id="countdownSec"></select>
-    <button id="btnAllCheck" title="全てチェック">☑</button>
-    <button id="btnAllClear" title="全てクリア">☐</button>
-    <button id="btnAutoScroll" title="自動スクロール">↕</button>
-    <button id="btnP4Toggle" title="P4判定">P4</button>
+  <div class="ctrl-area">
+    <div class="ctrl-col">
+      <div class="ctrl-bar">
+        <button id="btnRew">&lt;&lt;</button>
+        <button id="btnStart">▶ 開始</button>
+        <button id="btnAdv">&gt;&gt;</button>
+        <button id="btnStop">⏸</button>
+        <button id="btnReset">↺</button>
+      </div>
+      <div class="sub-bar">
+        <select id="countdownSec"></select>
+        <button id="btnAllCheck" title="全てチェック">☑</button>
+        <button id="btnAllClear" title="全てクリア">☐</button>
+        <button id="btnAutoScroll" title="自動スクロール">↕</button>
+        <button id="btnP4Toggle" title="P4判定">P4</button>
+      </div>
+    </div>
+    <div class="p4-mini" id="p4Mini">
+      <div class="p4mini-group">
+        <div class="p4mini-row" id="p4MiniRow1a"></div>
+        <div class="p4mini-row" id="p4MiniRow1b"></div>
+      </div>
+      <div class="p4mini-group">
+        <div class="p4mini-row" id="p4MiniRow2a"></div>
+        <div class="p4mini-row" id="p4MiniRow2b"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1228,6 +1293,18 @@ const P4GC_STYLES = {
            on:  'background:#D85A30;color:#fff;outline:none;' },
 };
 
+// ミニ表示専用アイコン（自作SVG。色でタイプを区別、真偽は下の禁止マークの有無で区別）
+const P4MINI_ICONS = {
+  water:   `<svg viewBox="0 0 32 32"><path d="M16 3 C10 13, 6 17, 6 22 a10 10 0 0 0 20 0 C26 17, 22 13, 16 3 Z" fill="#4fa8e8"/></svg>`,
+  thunder: `<svg viewBox="0 0 32 32"><path d="M18 2 L7 18 L14 18 L11 30 L26 13 L18 13 Z" fill="#a08cf0"/></svg>`,
+  bomb:    `<svg viewBox="0 0 32 32"><circle cx="16" cy="19" r="10" fill="#8fbf3f"/><path d="M16 9 L21 4" stroke="#8fbf3f" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="22" cy="4" r="2.6" fill="#ffcf4a"/></svg>`,
+  gaze:    `<svg viewBox="0 0 32 32"><path d="M2 16 C7 8, 25 8, 30 16 C25 24, 7 24, 2 16 Z" fill="none" stroke="#e2703a" stroke-width="2.6"/><circle cx="16" cy="16" r="5" fill="#e2703a"/></svg>`,
+  circle:  `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="#f5c451"/></svg>`,
+  donut:   `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="#52c9e0" stroke-width="6"/></svg>`,
+};
+// 「うそ（×）」に重ねる禁止マーク
+const P4MINI_PROHIBIT_SVG = `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#e0201f" stroke-width="2.9"/><line x1="8.3" y1="8.3" x2="23.7" y2="23.7" stroke="#e0201f" stroke-width="2.9" stroke-linecap="round"/></svg>`;
+
 function p4gcBase(b) {
   const s = P4GC_STYLES[b.dataset.k];
   if (s) b.style.cssText = s.off;
@@ -1272,6 +1349,77 @@ function p4gcRenderTf() {
 }
 p4gcRenderTf();
 
+// ── コントロール横のP4ミニ表示（表示順は炎グループ→波グループで固定。中身の早/遅はisHonooの入力結果で決まる） ──
+function p4MiniChip(iconKey, isOff) {
+  const el = document.createElement('span');
+  el.className = 'p4mini-chip';
+  const icon = document.createElement('span');
+  icon.className = 'icon';
+  icon.innerHTML = P4MINI_ICONS[iconKey];
+  el.appendChild(icon);
+  if (isOff) {
+    const prohibit = document.createElement('span');
+    prohibit.className = 'prohibit';
+    prohibit.innerHTML = P4MINI_PROHIBIT_SVG;
+    el.appendChild(prohibit);
+  }
+  return el;
+}
+
+function p4RenderMiniRow(rowA, rowB, slot, gcNum, shapeIconForRow, data) {
+  if (!rowA || !rowB) return;
+  rowA.innerHTML = '';
+  rowB.innerHTML = '';
+  const gcTf = gcNum === 1 ? data.gc1tf : data.gc2tf;
+
+  // 1行目: 水/雷・爆弾（自分自身の早/遅の割り当てだけを見る。⑤⑩の位置とは無関係）
+  if (data.wt && data.wt.s === slot) {
+    rowA.appendChild(p4MiniChip(data.wt.t === '水' ? 'water' : 'thunder', !data.wt.tf));
+  }
+  if (data.bomb && data.bomb.s === slot) {
+    rowA.appendChild(p4MiniChip('bomb', !data.bomb.tf));
+  }
+
+  // 2行目: 視線（常時みる/みない。このgc自身の●/？を使用。担当中のみアイコンだけ色をつける）＋⑤⑩（位置固定）
+  const gazeActive = data.gazeGc === gcNum;
+  const gazeEl = document.createElement('span');
+  gazeEl.className = 'p4mini-gaze' + (gazeActive ? ' active' : '');
+  gazeEl.innerHTML = `<span class="eye">${P4MINI_ICONS.gaze}</span><span>${gcTf ? 'みない' : 'みる'}</span>`;
+  rowB.appendChild(gazeEl);
+
+  // 円範囲/ドーナツはコール内容そのものを形で示すので、禁止マークは重ねない
+  rowB.appendChild(p4MiniChip(shapeIconForRow, false));
+}
+
+// ★正解が押されるまでは空欄。p4MiniResult（★正解時のスナップショット、Firebase同期対象）を描画する
+function p4RenderMini() {
+  const row1a = document.getElementById('p4MiniRow1a');
+  const row1b = document.getElementById('p4MiniRow1b');
+  const row2a = document.getElementById('p4MiniRow2a');
+  const row2b = document.getElementById('p4MiniRow2b');
+  if (!row1a) return;
+
+  if (!p4MiniResult) {
+    row1a.innerHTML = ''; row1b.innerHTML = '';
+    row2a.innerHTML = ''; row2b.innerHTML = '';
+    return;
+  }
+
+  const data = p4MiniResult;
+  // ⑤（炎の回）は必ず1行目、⑩（波の回）は必ず2行目に載せる。
+  // ⑤: true→円範囲(circle) / false→ドーナツ(donut)。⑩はその逆。
+  const s5Icon  = data.s5True  ? 'circle' : 'donut';
+  const s10Icon = data.s10True ? 'donut'  : 'circle';
+
+  p4RenderMiniRow(row1a, row1b, '早', 1, s5Icon, data);
+  p4RenderMiniRow(row2a, row2b, '遅', 2, s10Icon, data);
+}
+
+function p4ShowMiniResultFromData(data) {
+  p4MiniResult = data || null;
+  p4RenderMini();
+}
+
 document.querySelectorAll('.p4gcb').forEach(b => {
   p4gcBase(b);
   b.addEventListener('click', () => {
@@ -1293,6 +1441,7 @@ document.querySelectorAll('.p4gcb').forEach(b => {
 
 let p4GcResult = null; // null=未確定, array[11]=確定済み
 let p4McResult = null; // null=未確定, string=確定済み
+let p4MiniResult = null; // null=未確定, object=確定済み（ミニ表示用のスナップショット）
 
 const P4_CIRCLED = ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 
@@ -1359,6 +1508,23 @@ function computeP4Steps() {
   else if (s6.includes('散開')) s0 = '2';
 
   return [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10];
+}
+
+// コントロール横ミニ表示用のスナップショットを作る（★正解のタイミングでのみ呼ぶ）
+function computeP4MiniData() {
+  const wt = gcSel.wt, bomb = gcSel.bomb, gaze = gcSel.gaze;
+  const honooIsT1   = p4State.t1.isHonoo;
+  const honooInst   = honooIsT1 ? p4State.t1 : p4State.t2;
+  const tsunamiInst = honooIsT1 ? p4State.t2 : p4State.t1;
+  return {
+    wt:     wt   ? { t: wt.t, s: wt.s, tf: p4State[`gc${wt.gc}`].tf } : null,
+    bomb:   bomb ? { s: bomb.s, tf: p4State[`gc${bomb.gc}`].tf } : null,
+    gazeGc: gaze ? gaze.gc : null,
+    gc1tf:  p4State.gc1.tf,
+    gc2tf:  p4State.gc2.tf,
+    s5True:  honooInst.true,
+    s10True: tsunamiInst.true,
+  };
 }
 
 function computeP4McResult() {
@@ -1616,6 +1782,21 @@ function fbWriteMcResult(result) {
   fbDb.ref(`rooms/${roomKey}/p4mcresult`).set(result);
 }
 
+let fbMiniListener = null;
+
+function fbConnectMini(roomKey) {
+  if (fbMiniListener) fbMiniListener.off();
+  const ref = fbDb.ref(`rooms/${roomKey}/p4miniresult`);
+  fbMiniListener = ref;
+  ref.on('value', snap => { p4ShowMiniResultFromData(snap.val()); });
+}
+
+function fbWriteMiniResult(result) {
+  const roomKey = localStorage.getItem(LS_ROOMKEY);
+  if (!roomKey) return;
+  fbDb.ref(`rooms/${roomKey}/p4miniresult`).set(result);
+}
+
 function fbConnect(roomKey) {
   if (fbListener) fbListener.off();
   const ref = fbDb.ref(`rooms/${roomKey}/p4result`);
@@ -1631,6 +1812,7 @@ function fbConnect(roomKey) {
 function fbDisconnect() {
   if (fbListener)   { fbListener.off();   fbListener   = null; }
   if (fbMcListener) { fbMcListener.off(); fbMcListener = null; }
+  if (fbMiniListener) { fbMiniListener.off(); fbMiniListener = null; }
   setRoomStatus('', '');
 }
 
@@ -1653,6 +1835,7 @@ function setRoomStatus(msg, cls) {
     document.getElementById('p4RoomKeyInput').value = saved;
     fbConnect(saved);
     fbConnectMc(saved);
+    fbConnectMini(saved);
   }
 })();
 
@@ -1662,6 +1845,7 @@ document.getElementById('btnP4RoomSet').addEventListener('click', () => {
   localStorage.setItem(LS_ROOMKEY, key);
   fbConnect(key);
   fbConnectMc(key);
+  fbConnectMini(key);
 });
 document.getElementById('btnP4RoomClear').addEventListener('click', () => {
   localStorage.removeItem(LS_ROOMKEY);
@@ -1671,10 +1855,13 @@ document.getElementById('btnP4RoomClear').addEventListener('click', () => {
 
 document.getElementById('btnP4Star').addEventListener('click', () => {
   const result = computeP4Steps();
+  const miniData = computeP4MiniData();
   if (localStorage.getItem(LS_ROOMKEY)) {
     fbWriteResult(result);
+    fbWriteMiniResult(miniData);
   } else {
     p4ShowResultFromData(result);
+    p4ShowMiniResultFromData(miniData);
   }
 });
 
@@ -1700,9 +1887,11 @@ document.getElementById('btnP4Clear').addEventListener('click', () => {
   if (localStorage.getItem(LS_ROOMKEY)) {
     fbWriteResult(null);
     fbWriteMcResult(null);
+    fbWriteMiniResult(null);
   } else {
     p4ShowResultFromData(null);
     p4ShowMcResultFromData(null);
+    p4ShowMiniResultFromData(null);
   }
 });
 
