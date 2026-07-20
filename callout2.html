@@ -145,8 +145,10 @@
     border-radius: 8px;
     padding: 1px 5px;
   }
-  .p4mini-group { display: flex; flex-direction: column; gap: 2px; padding: 1px 0; }
-  .p4mini-group + .p4mini-group { border-top: 1px solid #223349; }
+  .p4mini-group { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+  .p4mini-group + .p4mini-group { border-top: 1px solid #3a5a7a; }
+  .p4mini-num { font-size: 0.62rem; color: #7aa8d4; font-weight: bold; flex-shrink: 0; width: 11px; text-align: center; }
+  .p4mini-lines { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
   .p4mini-row { display: flex; align-items: center; gap: 4px; min-height: 20px; }
 
   .p4mini-chip {
@@ -169,6 +171,21 @@
     opacity: 0.72;
   }
   .p4mini-chip .prohibit svg { width: 100%; height: 100%; display: block; }
+  .p4mini-chip .badge {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    z-index: 3;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #0f1a26;
+    border: 1px solid #3a5a7a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p4mini-chip .badge svg { width: 66%; height: 66%; display: block; }
 
   .p4mini-gaze {
     display: inline-flex;
@@ -495,6 +512,22 @@
     <div class="callout-box" id="callout">—</div>
   </div>
   <div class="ctrl-area">
+    <div class="p4-mini" id="p4Mini">
+      <div class="p4mini-group">
+        <span class="p4mini-num">①</span>
+        <div class="p4mini-lines">
+          <div class="p4mini-row" id="p4MiniRow1a"></div>
+          <div class="p4mini-row" id="p4MiniRow1b"></div>
+        </div>
+      </div>
+      <div class="p4mini-group">
+        <span class="p4mini-num">②</span>
+        <div class="p4mini-lines">
+          <div class="p4mini-row" id="p4MiniRow2a"></div>
+          <div class="p4mini-row" id="p4MiniRow2b"></div>
+        </div>
+      </div>
+    </div>
     <div class="ctrl-col">
       <div class="ctrl-bar">
         <button id="btnRew">&lt;&lt;</button>
@@ -509,16 +542,6 @@
         <button id="btnAllClear" title="全てクリア">☐</button>
         <button id="btnAutoScroll" title="自動スクロール">↕</button>
         <button id="btnP4Toggle" title="P4判定">P4</button>
-      </div>
-    </div>
-    <div class="p4-mini" id="p4Mini">
-      <div class="p4mini-group">
-        <div class="p4mini-row" id="p4MiniRow1a"></div>
-        <div class="p4mini-row" id="p4MiniRow1b"></div>
-      </div>
-      <div class="p4mini-group">
-        <div class="p4mini-row" id="p4MiniRow2a"></div>
-        <div class="p4mini-row" id="p4MiniRow2b"></div>
       </div>
     </div>
   </div>
@@ -1305,6 +1328,14 @@ const P4MINI_ICONS = {
 // 「うそ（×）」に重ねる禁止マーク
 const P4MINI_PROHIBIT_SVG = `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#e0201f" stroke-width="2.9"/><line x1="8.3" y1="8.3" x2="23.7" y2="23.7" stroke="#e0201f" stroke-width="2.9" stroke-linecap="round"/></svg>`;
 
+// 水/雷/爆弾の右下に添える小さいコーナーバッジ（頭わり/散開/とまる/うごく）
+const P4MINI_BADGES = {
+  group3: `<svg viewBox="0 0 32 32"><circle cx="16" cy="8" r="6" fill="#fff"/><circle cx="8" cy="23" r="6" fill="#fff"/><circle cx="24" cy="23" r="6" fill="#fff"/></svg>`,
+  alone1: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10.5" fill="#fff"/></svg>`,
+  pause:  `<svg viewBox="0 0 32 32"><rect x="8" y="6" width="6" height="20" rx="1.5" fill="#9aa5b1"/><rect x="18" y="6" width="6" height="20" rx="1.5" fill="#9aa5b1"/></svg>`,
+  play:   `<svg viewBox="0 0 32 32"><path d="M4 1 L31 16 L4 31 Z" fill="#ffe066"/></svg>`,
+};
+
 function p4gcBase(b) {
   const s = P4GC_STYLES[b.dataset.k];
   if (s) b.style.cssText = s.off;
@@ -1350,7 +1381,7 @@ function p4gcRenderTf() {
 p4gcRenderTf();
 
 // ── コントロール横のP4ミニ表示（表示順は炎グループ→波グループで固定。中身の早/遅はisHonooの入力結果で決まる） ──
-function p4MiniChip(iconKey, isOff) {
+function p4MiniChip(iconKey, isOff, badgeKey) {
   const el = document.createElement('span');
   el.className = 'p4mini-chip';
   const icon = document.createElement('span');
@@ -1363,6 +1394,12 @@ function p4MiniChip(iconKey, isOff) {
     prohibit.innerHTML = P4MINI_PROHIBIT_SVG;
     el.appendChild(prohibit);
   }
+  if (badgeKey) {
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.innerHTML = P4MINI_BADGES[badgeKey];
+    el.appendChild(badge);
+  }
   return el;
 }
 
@@ -1373,11 +1410,14 @@ function p4RenderMiniRow(rowA, rowB, slot, gcNum, shapeIconForRow, data) {
   const gcTf = gcNum === 1 ? data.gc1tf : data.gc2tf;
 
   // 1行目: 水/雷・爆弾（自分自身の早/遅の割り当てだけを見る。⑤⑩の位置とは無関係）
+  // バッジ: 水はtf=trueで頭わり(group3)/falseで散開(alone1)、雷はその逆。爆弾はtf=trueでとまる(pause)/falseでうごく(play)
   if (data.wt && data.wt.s === slot) {
-    rowA.appendChild(p4MiniChip(data.wt.t === '水' ? 'water' : 'thunder', !data.wt.tf));
+    const isWater = data.wt.t === '水';
+    const badge = (data.wt.tf === isWater) ? 'group3' : 'alone1';
+    rowA.appendChild(p4MiniChip(isWater ? 'water' : 'thunder', !data.wt.tf, badge));
   }
   if (data.bomb && data.bomb.s === slot) {
-    rowA.appendChild(p4MiniChip('bomb', !data.bomb.tf));
+    rowA.appendChild(p4MiniChip('bomb', !data.bomb.tf, data.bomb.tf ? 'pause' : 'play'));
   }
 
   // 2行目: 視線（常時みる/みない。このgc自身の●/？を使用。担当中のみアイコンだけ色をつける）＋⑤⑩（位置固定）
