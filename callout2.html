@@ -135,6 +135,7 @@
   .ctrl-area { display: flex; gap: 6px; align-items: stretch; }
   .ctrl-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
+  .p4-mini2-wrap { position: relative; }
   .p4-mini2 {
     margin-top: 8px;
     display: flex;
@@ -457,6 +458,22 @@
   .p4-btn-star  { background: #3a7acd; color: #fff; }
   .p4-btn-clear { background: #2a3a4a; color: #aaa; }
 
+  .p4-result-wrap { position: relative; }
+  .p4-popout-btn {
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    z-index: 4;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    line-height: 1;
+    font-size: 0.75rem;
+    background: #1e3d5a;
+    color: #aac8e8;
+    border-radius: 5px;
+  }
+  .p4-popout-btn.active { background: #3a7acd; color: #fff; }
   .p4-result {
     background: #0f1a26;
     border: 1px solid #2a4a6a;
@@ -508,13 +525,13 @@
   }
   .p4mc-combo-cell {
     text-align: center;
-    font-size: 0.74rem;
+    font-size: 1rem;
     font-weight: bold;
     padding: 1px 0;
   }
   .p4mc-combo-cell.on  { color: #ffffaa; }
   .p4mc-combo-cell.off { color: #5a7a9a; }
-  .p4mc-combo-cell.legend { color: #ffffaa; font-weight: bold; font-size: 0.78rem; border-top: 1px solid #2a4a6a; margin-top: 2px; padding-top: 3px; }
+  .p4mc-combo-cell.legend { color: #ffffaa; font-weight: bold; font-size: 1.05rem; border-top: 1px solid #2a4a6a; margin-top: 2px; padding-top: 3px; }
 
   /* 両パネルが開いている時: 記録パネルを下寄せ */
   .record-float.below-p4 {
@@ -598,7 +615,9 @@
       </div>
     </div>
   </div>
-  <div class="p4-mini2" id="p4Mini">
+  <div class="p4-mini2-wrap">
+    <button id="btnP4MiniPopOut" class="p4-popout-btn" title="別ウィンドウで開く">⧉</button>
+    <div class="p4-mini2" id="p4Mini">
     <div class="p4mini2-row" id="p4MiniRow1">
       <span class="p4mini2-num">1</span>
       <div class="p4mini2-slot slot-marker" id="p4MiniMarker1"></div>
@@ -614,6 +633,7 @@
       <div class="p4mini2-slot slot-bomb" id="p4MiniBomb2"></div>
       <div class="p4mini2-slot slot-gaze" id="p4MiniGaze2"></div>
       <div class="p4mini2-slot slot-shape" id="p4MiniShape2"></div>
+    </div>
     </div>
   </div>
 </div>
@@ -718,7 +738,10 @@
         <div class="p4-row" id="p4mc-thunder-row"></div>
         <div class="p4-row" id="p4mc-blizzard-row"></div>
       </div>
-      <div class="p4mc-combo" id="p4McCombo"></div>
+      <div class="p4-result-wrap">
+        <button id="btnP4PopOut" class="p4-popout-btn" title="別ウィンドウで開く">⧉</button>
+        <div class="p4mc-combo" id="p4McCombo"></div>
+      </div>
       <div class="p4-action-row">
         <button class="p4-act p4-btn-star" id="btnP4McStar">★ MC正解</button>
       </div>
@@ -1494,11 +1517,11 @@ function p4MiniMarkerChip(text) {
 }
 
 function p4RenderMiniRow(rowIndex, slot, gcNum, shapeIconForRow, data, markerText) {
-  const markerEl = document.getElementById(`p4MiniMarker${rowIndex}`);
-  const wtEl     = document.getElementById(`p4MiniWt${rowIndex}`);
-  const bombEl   = document.getElementById(`p4MiniBomb${rowIndex}`);
-  const gazeEl   = document.getElementById(`p4MiniGaze${rowIndex}`);
-  const shapeEl  = document.getElementById(`p4MiniShape${rowIndex}`);
+  const markerEl = p4MiniEl.querySelector(`#p4MiniMarker${rowIndex}`);
+  const wtEl     = p4MiniEl.querySelector(`#p4MiniWt${rowIndex}`);
+  const bombEl   = p4MiniEl.querySelector(`#p4MiniBomb${rowIndex}`);
+  const gazeEl   = p4MiniEl.querySelector(`#p4MiniGaze${rowIndex}`);
+  const shapeEl  = p4MiniEl.querySelector(`#p4MiniShape${rowIndex}`);
   if (!markerEl) return;
   markerEl.innerHTML = ''; wtEl.innerHTML = ''; bombEl.innerHTML = ''; gazeEl.innerHTML = ''; shapeEl.innerHTML = '';
 
@@ -1542,13 +1565,12 @@ function p4RenderMiniRow(rowIndex, slot, gcNum, shapeIconForRow, data, markerTex
 
 // ★正解が押されるまでは空欄。p4MiniResult（★正解時のスナップショット、Firebase同期対象）を描画する
 function p4RenderMini() {
-  const row1El = document.getElementById('p4MiniRow1');
-  if (!row1El) return;
+  if (!p4MiniEl) return;
 
   if (!p4MiniResult) {
     ['1', '2'].forEach(i => {
       ['Marker', 'Wt', 'Bomb', 'Gaze', 'Shape'].forEach(slot => {
-        const el = document.getElementById(`p4Mini${slot}${i}`);
+        const el = p4MiniEl.querySelector(`#p4Mini${slot}${i}`);
         if (el) el.innerHTML = '';
       });
     });
@@ -1592,6 +1614,91 @@ document.querySelectorAll('.p4gcb').forEach(b => {
 let p4GcResult = null; // null=未確定, array[11]=確定済み
 let p4McResult = null; // null=未確定, string=確定済み
 let p4MiniResult = null; // null=未確定, object=確定済み（ミニ表示用のスナップショット）
+
+// =====================
+// P4パネルの一部を別ウィンドウにポップアウトする仕組み（DevTools方式：閉じたら自動で元に戻る）
+// =====================
+function p4MakeAnchor(id) {
+  const el = document.getElementById(id);
+  const anchor = document.createComment(id + '-anchor');
+  el.parentNode.insertBefore(anchor, el);
+  return { el, anchor };
+}
+
+function p4CreatePopoutController(config) {
+  let popup = null;
+  let watcher = null;
+
+  function open() {
+    if (popup && !popup.closed) { popup.focus(); return; }
+    const w = window.open('about:blank', '_blank', `width=${config.width},height=${config.height}`);
+    const btn = config.getButton();
+    if (!w) {
+      console.warn('ポップアップがブロックされました。ブラウザのポップアップ許可設定を確認してください。');
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = '×';
+        btn.title = 'ポップアップがブロックされました';
+        setTimeout(() => { btn.textContent = orig; btn.title = '別ウィンドウで開く'; }, 2000);
+      }
+      return;
+    }
+    popup = w;
+    w.document.title = config.title;
+    const styleTag = document.querySelector('style');
+    if (styleTag) w.document.head.appendChild(styleTag.cloneNode(true));
+    w.document.body.style.cssText = config.bodyStyle;
+    config.targets.forEach(({ el }) => w.document.body.appendChild(el));
+    if (btn) btn.classList.add('active');
+
+    if (watcher) clearInterval(watcher);
+    watcher = setInterval(() => {
+      if (w.closed) {
+        clearInterval(watcher);
+        watcher = null;
+        redock();
+      }
+    }, 400);
+  }
+
+  function redock() {
+    config.targets.forEach(({ el, anchor }) => {
+      anchor.parentNode.insertBefore(el, anchor.nextSibling);
+    });
+    popup = null;
+    const btn = config.getButton();
+    if (btn) btn.classList.remove('active');
+  }
+
+  return { open, redock };
+}
+
+// GC結果リスト（ポップアウトはしない、通常表示のみ）
+const p4GcResultEl = document.getElementById('p4GcResult');
+
+// MCコンボ表（マジックチャージ 組み合わせ判断表）
+const p4McComboTargets = [p4MakeAnchor('p4McCombo')];
+const p4McComboEl = p4McComboTargets[0].el;
+const p4McComboPopoutCtrl = p4CreatePopoutController({
+  targets: p4McComboTargets,
+  title: 'マジックチャージ 結果',
+  width: 260, height: 190,
+  bodyStyle: 'background:#0f1a26;margin:0;padding:12px;',
+  getButton: () => document.getElementById('btnP4PopOut'),
+});
+document.getElementById('btnP4PopOut').addEventListener('click', p4McComboPopoutCtrl.open);
+
+// P4ミニ表示（①②の2段バー）
+const p4MiniTargets = [p4MakeAnchor('p4Mini')];
+const p4MiniEl = p4MiniTargets[0].el;
+const p4MiniPopoutCtrl = p4CreatePopoutController({
+  targets: p4MiniTargets,
+  title: 'P4 ミニ表示',
+  width: 560, height: 150,
+  bodyStyle: 'background:#0f1a26;margin:0;padding:10px;',
+  getButton: () => document.getElementById('btnP4MiniPopOut'),
+});
+document.getElementById('btnP4MiniPopOut').addEventListener('click', p4MiniPopoutCtrl.open);
 
 const P4_CIRCLED = ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 
@@ -1764,7 +1871,7 @@ function p4RenderTRow(rowId, inst, isHonoo, labelText, onTypeChange, typeReadOnl
   row.innerHTML = '';
   row.append(
     p4MakeLabel(labelText),
-    p4MakeSwitch(P4_TF_PAIRS, inst.true, v => { inst.true = v; }),
+    p4MakeSwitch(P4_TF_PAIRS, inst.true, v => { inst.true = v; p4McComboRevealed = true; }),
     p4MakeSwitch(P4_TYPE_PAIRS, isHonoo, onTypeChange, typeReadOnly)
   );
 }
@@ -1803,10 +1910,17 @@ function computeP4McCombo() {
   return { label, labelNote, rows: [P4MC_THUNDER_SEQ, P4MC_BLIZZARD_SEQ, legend] };
 }
 
-function p4RenderMcCombo() {
-  const el = document.getElementById('p4McCombo');
+function p4RenderMcCombo(dataOverride) {
+  const el = p4McComboEl;
   if (!el) return;
-  const { label, labelNote, rows } = computeP4McCombo();
+  // dataOverride省略時: 自分のスイッチ操作によるライブ計算（まだ何も操作していなければ空欄）
+  // dataOverride===null: リモート側でクリアされた（空欄）
+  // dataOverride={...}: リモートから受信した内容をそのまま表示
+  if (dataOverride === null || (dataOverride === undefined && !p4McComboRevealed)) {
+    el.innerHTML = '<div class="p4-placeholder">スイッチを操作すると表示されます</div>';
+    return;
+  }
+  const { label, labelNote, rows } = dataOverride || computeP4McCombo();
   el.innerHTML = '';
 
   const labelEl = document.createElement('div');
@@ -1837,12 +1951,15 @@ function p4RenderMcCombo() {
   el.appendChild(gridWrap);
 }
 
+let p4McComboRevealed = false;
+
 function p4RenderAll() {
-  p4RenderTRow('p4t1-row', p4State.t1, p4State.t1.isHonoo, '波/炎①', v => { p4State.t1.isHonoo = v; }, false);
+  p4RenderTRow('p4t1-row', p4State.t1, p4State.t1.isHonoo, '波/炎①', v => { p4State.t1.isHonoo = v; p4McComboRevealed = true; }, false);
   p4RenderTRow('p4t2-row', p4State.t2, !p4State.t1.isHonoo, '波/炎②', null, true);
-  p4RenderMcRow('p4mc-thunder-row',  'サンダガ（帯）', p4State.mc.thunder,  v => { p4State.mc.thunder  = v; });
-  p4RenderMcRow('p4mc-blizzard-row', 'ブリザガ（扇）', p4State.mc.blizzard, v => { p4State.mc.blizzard = v; });
+  p4RenderMcRow('p4mc-thunder-row',  'サンダガ（帯）', p4State.mc.thunder,  v => { p4State.mc.thunder  = v; p4McComboRevealed = true; });
+  p4RenderMcRow('p4mc-blizzard-row', 'ブリザガ（扇）', p4State.mc.blizzard, v => { p4State.mc.blizzard = v; p4McComboRevealed = true; });
   p4RenderMcCombo();
+  if (localStorage.getItem(LS_ROOMKEY) && p4McComboRevealed) fbWriteMcComboResult(computeP4McCombo());
 }
 
 function p4UpdateRowPrefixes() {
@@ -1968,7 +2085,7 @@ const LS_ROOMKEY = 'callout2.roomKey';
 let fbListener = null;
 
 function p4ShowResultFromData(data) {
-  const resultEl = document.getElementById('p4GcResult');
+  const resultEl = p4GcResultEl;
   if (data) {
     p4GcResult = data;
     const cols = document.createElement('div');
@@ -2006,6 +2123,21 @@ function fbWriteMcResult(result) {
   fbDb.ref(`rooms/${roomKey}/p4mcresult`).set(result);
 }
 
+let fbMcComboListener = null;
+
+function fbConnectMcCombo(roomKey) {
+  if (fbMcComboListener) fbMcComboListener.off();
+  const ref = fbDb.ref(`rooms/${roomKey}/p4mccombo`);
+  fbMcComboListener = ref;
+  ref.on('value', snap => { p4RenderMcCombo(snap.val()); });
+}
+
+function fbWriteMcComboResult(result) {
+  const roomKey = localStorage.getItem(LS_ROOMKEY);
+  if (!roomKey) return;
+  fbDb.ref(`rooms/${roomKey}/p4mccombo`).set(result);
+}
+
 let fbMiniListener = null;
 
 function fbConnectMini(roomKey) {
@@ -2036,6 +2168,7 @@ function fbConnect(roomKey) {
 function fbDisconnect() {
   if (fbListener)   { fbListener.off();   fbListener   = null; }
   if (fbMcListener) { fbMcListener.off(); fbMcListener = null; }
+  if (fbMcComboListener) { fbMcComboListener.off(); fbMcComboListener = null; }
   if (fbMiniListener) { fbMiniListener.off(); fbMiniListener = null; }
   setRoomStatus('', '');
 }
@@ -2059,6 +2192,7 @@ function setRoomStatus(msg, cls) {
     document.getElementById('p4RoomKeyInput').value = saved;
     fbConnect(saved);
     fbConnectMc(saved);
+    fbConnectMcCombo(saved);
     fbConnectMini(saved);
   }
 })();
@@ -2069,7 +2203,9 @@ document.getElementById('btnP4RoomSet').addEventListener('click', () => {
   localStorage.setItem(LS_ROOMKEY, key);
   fbConnect(key);
   fbConnectMc(key);
+  fbConnectMcCombo(key);
   fbConnectMini(key);
+  fbWriteMcComboResult(computeP4McCombo());
 });
 document.getElementById('btnP4RoomClear').addEventListener('click', () => {
   localStorage.removeItem(LS_ROOMKEY);
@@ -2107,11 +2243,13 @@ document.getElementById('btnP4Clear').addEventListener('click', () => {
   p4State.t1  = { isHonoo: true, true: true };
   p4State.t2  = { true: true };
   p4State.mc  = { thunder: true, blizzard: true };
+  p4McComboRevealed = false;
   p4RenderAll();
   if (localStorage.getItem(LS_ROOMKEY)) {
     fbWriteResult(null);
     fbWriteMcResult(null);
     fbWriteMiniResult(null);
+    fbWriteMcComboResult(null);
   } else {
     p4ShowResultFromData(null);
     p4ShowMcResultFromData(null);
