@@ -131,38 +131,57 @@
   #btnAutoScroll { background: #1e3d5a; color: #aac8e8; }
   #btnAutoScroll.off { background: #1e3d5a; color: #aac8e8; }
 
-  /* コントロール横のP4ミニ表示 */
+  /* コントロールバー下段: P4ミニ表示（2段、各段固定スロット） */
   .ctrl-area { display: flex; gap: 6px; align-items: stretch; }
   .ctrl-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .p4-mini {
-    flex: 0 0 auto;
-    width: 98px;
+
+  .p4-mini2 {
     margin-top: 8px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     background: #131f2e;
     border-radius: 8px;
-    padding: 1px 5px;
+    overflow: hidden;
   }
-  .p4mini-group { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
-  .p4mini-group + .p4mini-group { border-top: 1px solid #3a5a7a; }
-  .p4mini-num { font-size: 0.62rem; color: #7aa8d4; font-weight: bold; flex-shrink: 0; width: 11px; text-align: center; }
-  .p4mini-lines { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-  .p4mini-row { display: flex; align-items: center; gap: 4px; min-height: 20px; }
+  .p4mini2-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 50px;
+    padding: 0 14px;
+  }
+  .p4mini2-row + .p4mini2-row { border-top: 1px solid #3a5a7a; }
+  .p4mini2-num {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    height: 34px;
+    padding-left: 10px;
+    border-left: 3px solid #5b91ff;
+    color: #c8d8e8;
+    font-size: 1.6rem;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .p4mini2-slot { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .p4mini2-slot.slot-marker { width: 38px; height: 38px; }
+  .p4mini2-slot.slot-wt     { width: 40px; height: 40px; }
+  .p4mini2-slot.slot-bomb   { width: 40px; height: 40px; }
+  .p4mini2-slot.slot-gaze   { width: 82px; height: 40px; justify-content: flex-start; }
+  .p4mini2-slot.slot-shape  { width: 40px; height: 40px; }
 
   .p4mini-chip {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 5px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     background: #1a2d42;
     flex-shrink: 0;
   }
-  .p4mini-chip .icon { position: relative; z-index: 2; width: 15px; height: 15px; display: block; }
+  .p4mini-chip .icon { position: relative; z-index: 2; width: 24px; height: 24px; display: block; }
   .p4mini-chip .icon svg { width: 100%; height: 100%; display: block; }
   .p4mini-chip .prohibit {
     position: absolute;
@@ -173,27 +192,29 @@
   .p4mini-chip .prohibit svg { width: 100%; height: 100%; display: block; }
   .p4mini-chip .badge {
     position: absolute;
-    right: -8px;
-    bottom: -5px;
+    right: -11px;
+    bottom: -7px;
     z-index: 3;
-    width: 17px;
-    height: 17px;
+    width: 25px;
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
   .p4mini-chip .badge svg { width: 100%; height: 100%; display: block; }
-  .p4mini-chip .badge.badge-large svg { width: 100%; height: 100%; display: block; }
+
+  .p4mini-marker { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; }
+  .p4mini-marker svg { width: 100%; height: 100%; display: block; }
 
   .p4mini-gaze {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    font-size: 0.7rem;
+    gap: 5px;
+    font-size: 0.95rem;
     color: #c8d8e8;
     white-space: nowrap;
   }
-  .p4mini-gaze .eye { width: 15px; height: 15px; filter: grayscale(1); opacity: 0.4; }
+  .p4mini-gaze .eye { width: 24px; height: 24px; filter: grayscale(1); opacity: 0.4; }
   .p4mini-gaze .eye svg { width: 100%; height: 100%; display: block; }
   .p4mini-gaze.active .eye { filter: none; opacity: 1; }
 
@@ -558,22 +579,6 @@
     <div class="callout-box" id="callout">—</div>
   </div>
   <div class="ctrl-area">
-    <div class="p4-mini" id="p4Mini">
-      <div class="p4mini-group">
-        <span class="p4mini-num">①</span>
-        <div class="p4mini-lines">
-          <div class="p4mini-row" id="p4MiniRow1a"></div>
-          <div class="p4mini-row" id="p4MiniRow1b"></div>
-        </div>
-      </div>
-      <div class="p4mini-group">
-        <span class="p4mini-num">②</span>
-        <div class="p4mini-lines">
-          <div class="p4mini-row" id="p4MiniRow2a"></div>
-          <div class="p4mini-row" id="p4MiniRow2b"></div>
-        </div>
-      </div>
-    </div>
     <div class="ctrl-col">
       <div class="ctrl-bar">
         <button id="btnRew">&lt;&lt;</button>
@@ -589,6 +594,24 @@
         <button id="btnAutoScroll" title="自動スクロール">↕</button>
         <button id="btnP4Toggle" title="P4判定">P4</button>
       </div>
+    </div>
+  </div>
+  <div class="p4-mini2" id="p4Mini">
+    <div class="p4mini2-row" id="p4MiniRow1">
+      <span class="p4mini2-num">1</span>
+      <div class="p4mini2-slot slot-marker" id="p4MiniMarker1"></div>
+      <div class="p4mini2-slot slot-wt" id="p4MiniWt1"></div>
+      <div class="p4mini2-slot slot-bomb" id="p4MiniBomb1"></div>
+      <div class="p4mini2-slot slot-gaze" id="p4MiniGaze1"></div>
+      <div class="p4mini2-slot slot-shape" id="p4MiniShape1"></div>
+    </div>
+    <div class="p4mini2-row" id="p4MiniRow2">
+      <span class="p4mini2-num">2</span>
+      <div class="p4mini2-slot slot-marker" id="p4MiniMarker2"></div>
+      <div class="p4mini2-slot slot-wt" id="p4MiniWt2"></div>
+      <div class="p4mini2-slot slot-bomb" id="p4MiniBomb2"></div>
+      <div class="p4mini2-slot slot-gaze" id="p4MiniGaze2"></div>
+      <div class="p4mini2-slot slot-shape" id="p4MiniShape2"></div>
     </div>
   </div>
 </div>
@@ -822,11 +845,11 @@ const STRUCTURE = [
         label: '開幕', at: 740,
         events: [
           { at: 744.9,  label: 'おちょくりソウル★' },
-          { at: 786.2,  label: 'マーク{{⓪}}' },
+          { at: 786.6,  label: 'アタック {{⓪}}' },
           { at: 789.0,  label: '黄色反対' },
           { at: 793.5,  label: 'ビームみる' },
-          { at: 797.0,  label: 'この後{{①}}' },         //①水雷
-          { at: 803.4,  label: '加速度、{{②}}' }, //②加速度担当
+          { at: 799.2,  label: 'この後{{①}}' },         //①水雷
+          { at: 806.3,  label: '加速度、{{②}}' }, //②加速度担当
           { at: 809.6,  label: '{{③}}、{{④}}' }, //③視線担当か　④見る/みない
           { at: 814.6,  label: 'サンダガ覚える' },
           { at: 820.6,  label: '真ん中集合アルファ見る'},
@@ -1370,7 +1393,7 @@ const P4MINI_ICONS = {
   bomb:    `<svg viewBox="0 0 32 32"><circle cx="16" cy="19" r="10" fill="#8fbf3f"/><path d="M16 9 L21 4" stroke="#8fbf3f" stroke-width="3" stroke-linecap="round" fill="none"/><circle cx="22" cy="4" r="2.6" fill="#ffcf4a"/></svg>`,
   gaze:    `<svg viewBox="0 0 32 32"><path d="M2 16 C7 8, 25 8, 30 16 C25 24, 7 24, 2 16 Z" fill="none" stroke="#e2703a" stroke-width="2.6"/><circle cx="16" cy="16" r="5" fill="#e2703a"/></svg>`,
   circle:  `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="#f5c451"/></svg>`,
-  donut:   `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="#52c9e0" stroke-width="6"/></svg>`,
+  donut:   `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#52c9e0" stroke-width="9"/></svg>`,
 };
 // 「うそ（×）」に重ねる禁止マーク
 const P4MINI_PROHIBIT_SVG = `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#e0201f" stroke-width="2.9"/><line x1="8.3" y1="8.3" x2="23.7" y2="23.7" stroke="#e0201f" stroke-width="2.9" stroke-linecap="round"/></svg>`;
@@ -1450,45 +1473,71 @@ function p4MiniChip(iconKey, isOff, badgeKey) {
   return el;
 }
 
-function p4RenderMiniRow(rowA, rowB, slot, gcNum, shapeIconForRow, data) {
-  if (!rowA || !rowB) return;
-  rowA.innerHTML = '';
-  rowB.innerHTML = '';
-  const gcTf = gcNum === 1 ? data.gc1tf : data.gc2tf;
+// ⓪マーカー（六角形＋数字。頭割りバッジと同系統のグロー表現）
+function p4MiniMarkerChip(text) {
+  const el = document.createElement('span');
+  el.className = 'p4mini-marker';
+  el.innerHTML = `<svg viewBox="0 0 32 32">
+    <defs>
+      <radialGradient id="p4mini-marker-glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#f5c451" stop-opacity="0.55"/>
+        <stop offset="70%" stop-color="#f5c451" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#f5c451" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <polygon points="30,16 23,28 9,28 2,16 9,4 23,4" fill="url(#p4mini-marker-glow)" stroke="#f5c451" stroke-width="2.4"/>
+    <text x="16" y="21" text-anchor="middle" font-size="15" font-weight="bold" fill="#ffe9b0">${text}</text>
+  </svg>`;
+  return el;
+}
 
-  // 1行目: 水/雷・爆弾（自分自身の早/遅の割り当てだけを見る。⑤⑩の位置とは無関係）
+function p4RenderMiniRow(rowIndex, slot, gcNum, shapeIconForRow, data, markerText) {
+  const markerEl = document.getElementById(`p4MiniMarker${rowIndex}`);
+  const wtEl     = document.getElementById(`p4MiniWt${rowIndex}`);
+  const bombEl   = document.getElementById(`p4MiniBomb${rowIndex}`);
+  const gazeEl   = document.getElementById(`p4MiniGaze${rowIndex}`);
+  const shapeEl  = document.getElementById(`p4MiniShape${rowIndex}`);
+  if (!markerEl) return;
+  markerEl.innerHTML = ''; wtEl.innerHTML = ''; bombEl.innerHTML = ''; gazeEl.innerHTML = ''; shapeEl.innerHTML = '';
+
+  // ⓪: ①(早)が散開なら1行目に、⑥(遅)が散開なら2行目にマーカーを表示
+  if (markerText) markerEl.appendChild(p4MiniMarkerChip(markerText));
+
+  // 水/雷・爆弾（自分自身の早/遅の割り当てだけを見る。空欄でもスロット自体は確保される）
   // バッジ: 水はtf=trueで頭わり(group3)/falseで散開(alone1)、雷はその逆。爆弾はtf=trueでとまる(pause)/falseでうごく(play)
   if (data.wt && data.wt.s === slot) {
     const isWater = data.wt.t === '水';
     const badge = (data.wt.tf === isWater) ? 'group3' : 'alone1';
-    rowA.appendChild(p4MiniChip(isWater ? 'water' : 'thunder', !data.wt.tf, badge));
+    wtEl.appendChild(p4MiniChip(isWater ? 'water' : 'thunder', !data.wt.tf, badge));
   }
   if (data.bomb && data.bomb.s === slot) {
-    rowA.appendChild(p4MiniChip('bomb', !data.bomb.tf, data.bomb.tf ? 'pause' : 'play'));
+    bombEl.appendChild(p4MiniChip('bomb', !data.bomb.tf, data.bomb.tf ? 'pause' : 'play'));
   }
 
-  // 2行目: 視線（常時みる/みない。このgc自身の●/？を使用。担当中のみアイコンだけ色をつける）＋⑤⑩（位置固定）
+  // 視線（常時みる/みない。このgc自身の●/？を使用。担当中のみアイコンだけ色をつける）
+  const gcTf = gcNum === 1 ? data.gc1tf : data.gc2tf;
   const gazeActive = data.gazeGc === gcNum;
-  const gazeEl = document.createElement('span');
-  gazeEl.className = 'p4mini-gaze' + (gazeActive ? ' active' : '');
-  gazeEl.innerHTML = `<span class="eye">${P4MINI_ICONS.gaze}</span><span>${gcTf ? 'みない' : 'みる'}</span>`;
-  rowB.appendChild(gazeEl);
+  const gazeWrap = document.createElement('span');
+  gazeWrap.className = 'p4mini-gaze' + (gazeActive ? ' active' : '');
+  gazeWrap.innerHTML = `<span class="eye">${P4MINI_ICONS.gaze}</span><span>${gcTf ? 'みない' : 'みる'}</span>`;
+  gazeEl.appendChild(gazeWrap);
 
-  // 円範囲/ドーナツはコール内容そのものを形で示すので、禁止マークは重ねない
-  rowB.appendChild(p4MiniChip(shapeIconForRow, false));
+  // 円範囲/ドーナツ（⑤⑩は位置固定。コール内容そのものを形で示すので禁止マークは重ねない）
+  shapeEl.appendChild(p4MiniChip(shapeIconForRow, false));
 }
 
 // ★正解が押されるまでは空欄。p4MiniResult（★正解時のスナップショット、Firebase同期対象）を描画する
 function p4RenderMini() {
-  const row1a = document.getElementById('p4MiniRow1a');
-  const row1b = document.getElementById('p4MiniRow1b');
-  const row2a = document.getElementById('p4MiniRow2a');
-  const row2b = document.getElementById('p4MiniRow2b');
-  if (!row1a) return;
+  const row1El = document.getElementById('p4MiniRow1');
+  if (!row1El) return;
 
   if (!p4MiniResult) {
-    row1a.innerHTML = ''; row1b.innerHTML = '';
-    row2a.innerHTML = ''; row2b.innerHTML = '';
+    ['1', '2'].forEach(i => {
+      ['Marker', 'Wt', 'Bomb', 'Gaze', 'Shape'].forEach(slot => {
+        const el = document.getElementById(`p4Mini${slot}${i}`);
+        if (el) el.innerHTML = '';
+      });
+    });
     return;
   }
 
@@ -1498,8 +1547,8 @@ function p4RenderMini() {
   const s5Icon  = data.s5True  ? 'circle' : 'donut';
   const s10Icon = data.s10True ? 'donut'  : 'circle';
 
-  p4RenderMiniRow(row1a, row1b, '早', 1, s5Icon, data);
-  p4RenderMiniRow(row2a, row2b, '遅', 2, s10Icon, data);
+  p4RenderMiniRow(1, '早', 1, s5Icon, data, data.marker === '1' ? '1' : null);
+  p4RenderMiniRow(2, '遅', 2, s10Icon, data, data.marker === '2' ? '2' : null);
 }
 
 function p4ShowMiniResultFromData(data) {
@@ -1603,6 +1652,15 @@ function computeP4MiniData() {
   const honooIsT1   = p4State.t1.isHonoo;
   const honooInst   = honooIsT1 ? p4State.t1 : p4State.t2;
   const tsunamiInst = honooIsT1 ? p4State.t2 : p4State.t1;
+
+  // ⓪: 水雷担当が散開になる方（水はtf=false、雷はtf=trueで散開）の早/遅で1/2を決める
+  let marker = null;
+  if (wt) {
+    const tf = p4State[`gc${wt.gc}`].tf;
+    const isSpread = wt.t === '水' ? !tf : tf;
+    if (isSpread) marker = (wt.s === '早') ? '1' : '2';
+  }
+
   return {
     wt:     wt   ? { t: wt.t, s: wt.s, tf: p4State[`gc${wt.gc}`].tf } : null,
     bomb:   bomb ? { s: bomb.s, tf: p4State[`gc${bomb.gc}`].tf } : null,
@@ -1611,6 +1669,7 @@ function computeP4MiniData() {
     gc2tf:  p4State.gc2.tf,
     s5True:  honooInst.true,
     s10True: tsunamiInst.true,
+    marker,
   };
 }
 
