@@ -146,7 +146,7 @@
   .p4mini2-row {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     height: 50px;
     padding: 0 14px;
   }
@@ -165,10 +165,12 @@
   }
   .p4mini2-slot { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .p4mini2-slot.slot-marker { width: 38px; height: 38px; }
-  .p4mini2-slot.slot-wt     { width: 40px; height: 40px; }
-  .p4mini2-slot.slot-bomb   { width: 40px; height: 40px; }
-  .p4mini2-slot.slot-gaze   { width: 82px; height: 40px; justify-content: flex-start; }
+  .p4mini2-slot.slot-wt     { width: 94px; height: 40px; justify-content: flex-start; }
+  .p4mini2-slot.slot-bomb   { width: 94px; height: 40px; justify-content: flex-start; }
+  .p4mini2-slot.slot-gaze   { width: 78px; height: 40px; justify-content: flex-start; }
   .p4mini2-slot.slot-shape  { width: 40px; height: 40px; }
+
+  .p4mini-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.95rem; color: #c8d8e8; white-space: nowrap; }
 
   .p4mini-chip {
     position: relative;
@@ -192,11 +194,11 @@
   .p4mini-chip .prohibit svg { width: 100%; height: 100%; display: block; }
   .p4mini-chip .badge {
     position: absolute;
-    right: -11px;
-    bottom: -7px;
+    right: -9px;
+    top: -2px;
     z-index: 3;
-    width: 25px;
-    height: 25px;
+    width: 21px;
+    height: 21px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1508,10 +1510,22 @@ function p4RenderMiniRow(rowIndex, slot, gcNum, shapeIconForRow, data, markerTex
   if (data.wt && data.wt.s === slot) {
     const isWater = data.wt.t === '水';
     const badge = (data.wt.tf === isWater) ? 'group3' : 'alone1';
-    wtEl.appendChild(p4MiniChip(isWater ? 'water' : 'thunder', !data.wt.tf, badge));
+    const wtWrap = document.createElement('span');
+    wtWrap.className = 'p4mini-tag';
+    wtWrap.appendChild(p4MiniChip(isWater ? 'water' : 'thunder', !data.wt.tf, badge));
+    const wtLabel = document.createElement('span');
+    wtLabel.textContent = badge === 'group3' ? '頭割り' : '散開';
+    wtWrap.appendChild(wtLabel);
+    wtEl.appendChild(wtWrap);
   }
   if (data.bomb && data.bomb.s === slot) {
-    bombEl.appendChild(p4MiniChip('bomb', !data.bomb.tf, data.bomb.tf ? 'pause' : 'play'));
+    const bombWrap = document.createElement('span');
+    bombWrap.className = 'p4mini-tag';
+    bombWrap.appendChild(p4MiniChip('bomb', !data.bomb.tf, data.bomb.tf ? 'pause' : 'play'));
+    const bombLabel = document.createElement('span');
+    bombLabel.textContent = data.bomb.tf ? 'とまる' : 'うごく';
+    bombWrap.appendChild(bombLabel);
+    bombEl.appendChild(bombWrap);
   }
 
   // 視線（常時みる/みない。このgc自身の●/？を使用。担当中のみアイコンだけ色をつける）
