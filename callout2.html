@@ -449,9 +449,57 @@
     padding: 6px 8px;
     min-height: 20px;
   }
-  .p4-result ol { list-style: none; display: flex; flex-direction: column; gap: 3px; }
-  .p4-result li { font-size: 0.8rem; color: #ffffaa; font-weight: bold; }
+  .p4-result-cols { display: flex; gap: 6px; }
+  .p4-result-cols ol { list-style: none; display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+  .p4-result li { font-size: 0.72rem; line-height: 1.3; color: #ffffaa; font-weight: bold; }
   .p4-result .p4-placeholder { color: #5a7a9a; font-size: 0.72rem; font-weight: normal; }
+
+  /* マジックチャージ 組み合わせ判断表 */
+  .p4mc-combo {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    background: #0f1a26;
+    border: 1px solid #2a4a6a;
+    border-radius: 5px;
+    padding: 6px 8px;
+  }
+  .p4mc-combo-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 40px;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: bold;
+    color: #ffffaa;
+    border-right: 1px solid #2a4a6a;
+    padding-right: 8px;
+  }
+  .p4mc-combo-label-sub {
+    font-size: 0.6rem;
+    font-weight: normal;
+    color: #7aa8d4;
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+  .p4mc-combo-gridwrap { flex: 1; min-width: 0; }
+  .p4mc-combo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px 4px;
+  }
+  .p4mc-combo-cell {
+    text-align: center;
+    font-size: 0.74rem;
+    font-weight: bold;
+    padding: 1px 0;
+  }
+  .p4mc-combo-cell.on  { color: #ffffaa; }
+  .p4mc-combo-cell.off { color: #5a7a9a; }
+  .p4mc-combo-cell.legend { color: #ffffaa; font-weight: bold; font-size: 0.78rem; border-top: 1px solid #2a4a6a; margin-top: 2px; padding-top: 3px; }
 
   /* 両パネルが開いている時: 記録パネルを下寄せ */
   .record-float.below-p4 {
@@ -653,6 +701,7 @@
         <div class="p4-row" id="p4mc-thunder-row"></div>
         <div class="p4-row" id="p4mc-blizzard-row"></div>
       </div>
+      <div class="p4mc-combo" id="p4McCombo"></div>
       <div class="p4-action-row">
         <button class="p4-act p4-btn-star" id="btnP4McStar">★ MC正解</button>
       </div>
@@ -1665,11 +1714,70 @@ function p4RenderMcRow(rowId, labelText, value, onChange) {
   row.append(lbl, sw, txt);
 }
 
+// マジックチャージ 組み合わせ判断表
+// 上2段（？〇パターン）はアウト詠唱時の4通りの組み合わせを示す固定表示。
+// 3段目（雷/氷/全/無）は、チャージ時の真偽とアウト詠唱の組み合わせから安置を算出する。
+const P4MC_THUNDER_SEQ  = ['？', '〇', '？', '〇'];
+const P4MC_BLIZZARD_SEQ = ['〇', '？', '？', '〇'];
+
+function computeP4McCombo() {
+  const thunderCharge  = p4State.mc.thunder;
+  const blizzardCharge = p4State.mc.blizzard;
+  const legend = P4MC_THUNDER_SEQ.map((sym, i) => {
+    const thunderHit  = thunderCharge  === (sym === '？');
+    const blizzardHit = blizzardCharge === (P4MC_BLIZZARD_SEQ[i] === '？');
+    if (thunderHit && blizzardHit) return '全';
+    if (thunderHit)  return '雷';
+    if (blizzardHit) return '氷';
+    return '無';
+  });
+  const honooIsT1   = p4State.t1.isHonoo;
+  const tsunamiInst = honooIsT1 ? p4State.t2 : p4State.t1;
+  const label = tsunamiInst.true ? 'ドーナツ' : '円範囲';
+  const labelNote = tsunamiInst.true ? '（なかで）' : '（そとで）';
+  return { label, labelNote, rows: [P4MC_THUNDER_SEQ, P4MC_BLIZZARD_SEQ, legend] };
+}
+
+function p4RenderMcCombo() {
+  const el = document.getElementById('p4McCombo');
+  if (!el) return;
+  const { label, labelNote, rows } = computeP4McCombo();
+  el.innerHTML = '';
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'p4mc-combo-label';
+  const labelMain = document.createElement('div');
+  labelMain.textContent = label;
+  const labelSub = document.createElement('div');
+  labelSub.className = 'p4mc-combo-label-sub';
+  labelSub.textContent = labelNote;
+  labelEl.appendChild(labelMain);
+  labelEl.appendChild(labelSub);
+  el.appendChild(labelEl);
+
+  const gridWrap = document.createElement('div');
+  gridWrap.className = 'p4mc-combo-gridwrap';
+  const grid = document.createElement('div');
+  grid.className = 'p4mc-combo-grid';
+  rows.forEach((row, ri) => {
+    const isLegend = ri === 2;
+    row.forEach(sym => {
+      const cell = document.createElement('div');
+      cell.className = 'p4mc-combo-cell' + (isLegend ? ' legend' : (sym === '〇' ? ' on' : ' off'));
+      cell.textContent = sym;
+      grid.appendChild(cell);
+    });
+  });
+  gridWrap.appendChild(grid);
+  el.appendChild(gridWrap);
+}
+
 function p4RenderAll() {
   p4RenderTRow('p4t1-row', p4State.t1, p4State.t1.isHonoo, '波/炎①', v => { p4State.t1.isHonoo = v; }, false);
   p4RenderTRow('p4t2-row', p4State.t2, !p4State.t1.isHonoo, '波/炎②', null, true);
   p4RenderMcRow('p4mc-thunder-row',  'サンダガ（帯）', p4State.mc.thunder,  v => { p4State.mc.thunder  = v; });
   p4RenderMcRow('p4mc-blizzard-row', 'ブリザガ（扇）', p4State.mc.blizzard, v => { p4State.mc.blizzard = v; });
+  p4RenderMcCombo();
 }
 
 function p4UpdateRowPrefixes() {
@@ -1798,14 +1906,19 @@ function p4ShowResultFromData(data) {
   const resultEl = document.getElementById('p4GcResult');
   if (data) {
     p4GcResult = data;
-    const ol = document.createElement('ol');
+    const cols = document.createElement('div');
+    cols.className = 'p4-result-cols';
+    const ol1 = document.createElement('ol');
+    const ol2 = document.createElement('ol');
     data.forEach((text, i) => {
       const li = document.createElement('li');
       li.textContent = P4_CIRCLED[i] + (text ? text : '－');
-      ol.appendChild(li);
+      (i <= 5 ? ol1 : ol2).appendChild(li);
     });
+    cols.appendChild(ol1);
+    cols.appendChild(ol2);
     resultEl.innerHTML = '';
-    resultEl.appendChild(ol);
+    resultEl.appendChild(cols);
   } else {
     p4GcResult = null;
     resultEl.innerHTML = '<div class="p4-placeholder">★を押すと正解が表示されます</div>';
