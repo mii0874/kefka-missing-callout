@@ -1625,13 +1625,32 @@ function p4MakeAnchor(id) {
   return { el, anchor };
 }
 
+// 開いているポップアウト先ウィンドウをまとめて把握しておき、
+// 親ウィンドウが閉じられる／リロードされる際に道連れで閉じる
+const p4OpenPopups = new Set();
+window.addEventListener('beforeunload', () => {
+  p4OpenPopups.forEach(w => { if (!w.closed) w.close(); });
+});
+
 function p4CreatePopoutController(config) {
   let popup = null;
-  let watcher = null;
+
+  // 前回のウィンドウ位置をlocalStorageに覚えておき、次回開いたときに再現する
+  function loadPos() {
+    try {
+      const raw = localStorage.getItem(config.posKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function savePos(left, top) {
+    try { localStorage.setItem(config.posKey, JSON.stringify({ left, top })); } catch (e) {}
+  }
 
   function open() {
     if (popup && !popup.closed) { popup.focus(); return; }
-    const w = window.open('about:blank', '_blank', `width=${config.width},height=${config.height}`);
+    const pos = loadPos();
+    const posFeatures = pos ? `,left=${pos.left},top=${pos.top}` : '';
+    const w = window.open('about:blank', '_blank', `width=${config.width},height=${config.height}${posFeatures}`);
     const btn = config.getButton();
     if (!w) {
       console.warn('ポップアップがブロックされました。ブラウザのポップアップ許可設定を確認してください。');
@@ -1644,6 +1663,7 @@ function p4CreatePopoutController(config) {
       return;
     }
     popup = w;
+    p4OpenPopups.add(w);
     w.document.title = config.title;
     const styleTag = document.querySelector('style');
     if (styleTag) w.document.head.appendChild(styleTag.cloneNode(true));
@@ -1651,20 +1671,18 @@ function p4CreatePopoutController(config) {
     config.targets.forEach(({ el }) => w.document.body.appendChild(el));
     if (btn) btn.classList.add('active');
 
-    if (watcher) clearInterval(watcher);
-    watcher = setInterval(() => {
-      if (w.closed) {
-        clearInterval(watcher);
-        watcher = null;
-        redock();
-      }
-    }, 400);
+    // ポーリングはせず、子ウィンドウが閉じられる直前（beforeunload）に位置を記録して戻す
+    w.addEventListener('beforeunload', () => {
+      try { savePos(w.screenX, w.screenY); } catch (e) {}
+      redock();
+    });
   }
 
   function redock() {
     config.targets.forEach(({ el, anchor }) => {
       anchor.parentNode.insertBefore(el, anchor.nextSibling);
     });
+    p4OpenPopups.delete(popup);
     popup = null;
     const btn = config.getButton();
     if (btn) btn.classList.remove('active');
@@ -1685,6 +1703,7 @@ const p4McComboPopoutCtrl = p4CreatePopoutController({
   width: 260, height: 190,
   bodyStyle: 'background:#0f1a26;margin:0;padding:12px;',
   getButton: () => document.getElementById('btnP4PopOut'),
+  posKey: 'callout2.p4popout.mccombo.pos',
 });
 document.getElementById('btnP4PopOut').addEventListener('click', p4McComboPopoutCtrl.open);
 
@@ -1697,6 +1716,7 @@ const p4MiniPopoutCtrl = p4CreatePopoutController({
   width: 560, height: 150,
   bodyStyle: 'background:#0f1a26;margin:0;padding:10px;',
   getButton: () => document.getElementById('btnP4MiniPopOut'),
+  posKey: 'callout2.p4popout.mini.pos',
 });
 document.getElementById('btnP4MiniPopOut').addEventListener('click', p4MiniPopoutCtrl.open);
 
