@@ -1395,7 +1395,7 @@ const p4State = {
   gc2: { tf: true },
   t1:  { isHonoo: true, true: true },
   t2:  { true: true },
-  mc:  { thunder: true, blizzard: true },
+  mc:  { thunder: null, blizzard: null }, // null=未設定（サンダガ・ブリザガ両方が設定されるまでコンボ表は空欄）
 };
 
 const gcSel = { wt: null, bomb: null, gaze: null };
@@ -1833,7 +1833,7 @@ function p4MakeSwitch(pairs, currentValue, onChange, readOnly) {
     seg.className = 'p4-switch-seg' + (currentValue === p.value ? ' on' : '');
     seg.textContent = p.label;
     if (!readOnly) {
-      seg.addEventListener('click', () => { onChange(!currentValue); p4RenderAll(); });
+      seg.addEventListener('click', () => { onChange(p.value); p4RenderAll(); });
     }
     wrap.appendChild(seg);
   });
@@ -1871,7 +1871,7 @@ function p4RenderTRow(rowId, inst, isHonoo, labelText, onTypeChange, typeReadOnl
   row.innerHTML = '';
   row.append(
     p4MakeLabel(labelText),
-    p4MakeSwitch(P4_TF_PAIRS, inst.true, v => { inst.true = v; p4McComboRevealed = true; }),
+    p4MakeSwitch(P4_TF_PAIRS, inst.true, v => { inst.true = v; }),
     p4MakeSwitch(P4_TYPE_PAIRS, isHonoo, onTypeChange, typeReadOnly)
   );
 }
@@ -1882,7 +1882,7 @@ function p4RenderMcRow(rowId, labelText, value, onChange) {
   const sw  = p4MakeSwitch(P4_TF_PAIRS, value, onChange, false);
   const txt = document.createElement('span');
   txt.style.cssText = 'font-size:0.75rem;color:#ffffaa;margin-left:auto;white-space:nowrap;';
-  txt.textContent = value ? 'ほんとう' : 'うそ';
+  txt.textContent = value === null ? '未設定' : (value ? 'ほんとう' : 'うそ');
   row.append(lbl, sw, txt);
 }
 
@@ -1913,11 +1913,12 @@ function computeP4McCombo() {
 function p4RenderMcCombo(dataOverride) {
   const el = p4McComboEl;
   if (!el) return;
-  // dataOverride省略時: 自分のスイッチ操作によるライブ計算（まだ何も操作していなければ空欄）
+  // dataOverride省略時: 自分のスイッチ操作によるライブ計算（サンダガ・ブリザガ両方が設定されるまでは空欄）
   // dataOverride===null: リモート側でクリアされた（空欄）
   // dataOverride={...}: リモートから受信した内容をそのまま表示
-  if (dataOverride === null || (dataOverride === undefined && !p4McComboRevealed)) {
-    el.innerHTML = '<div class="p4-placeholder">スイッチを操作すると表示されます</div>';
+  const bothSet = p4State.mc.thunder !== null && p4State.mc.blizzard !== null;
+  if (dataOverride === null || (dataOverride === undefined && !bothSet)) {
+    el.innerHTML = '<div class="p4-placeholder">サンダガ・ブリザガ両方を設定すると表示されます</div>';
     return;
   }
   const { label, labelNote, rows } = dataOverride || computeP4McCombo();
@@ -1951,15 +1952,14 @@ function p4RenderMcCombo(dataOverride) {
   el.appendChild(gridWrap);
 }
 
-let p4McComboRevealed = false;
-
 function p4RenderAll() {
-  p4RenderTRow('p4t1-row', p4State.t1, p4State.t1.isHonoo, '波/炎①', v => { p4State.t1.isHonoo = v; p4McComboRevealed = true; }, false);
+  p4RenderTRow('p4t1-row', p4State.t1, p4State.t1.isHonoo, '波/炎①', v => { p4State.t1.isHonoo = v; }, false);
   p4RenderTRow('p4t2-row', p4State.t2, !p4State.t1.isHonoo, '波/炎②', null, true);
-  p4RenderMcRow('p4mc-thunder-row',  'サンダガ（帯）', p4State.mc.thunder,  v => { p4State.mc.thunder  = v; p4McComboRevealed = true; });
-  p4RenderMcRow('p4mc-blizzard-row', 'ブリザガ（扇）', p4State.mc.blizzard, v => { p4State.mc.blizzard = v; p4McComboRevealed = true; });
+  p4RenderMcRow('p4mc-thunder-row',  'サンダガ（帯）', p4State.mc.thunder,  v => { p4State.mc.thunder  = v; });
+  p4RenderMcRow('p4mc-blizzard-row', 'ブリザガ（扇）', p4State.mc.blizzard, v => { p4State.mc.blizzard = v; });
   p4RenderMcCombo();
-  if (localStorage.getItem(LS_ROOMKEY) && p4McComboRevealed) fbWriteMcComboResult(computeP4McCombo());
+  const p4McComboBothSet = p4State.mc.thunder !== null && p4State.mc.blizzard !== null;
+  if (localStorage.getItem(LS_ROOMKEY) && p4McComboBothSet) fbWriteMcComboResult(computeP4McCombo());
 }
 
 function p4UpdateRowPrefixes() {
@@ -2205,7 +2205,9 @@ document.getElementById('btnP4RoomSet').addEventListener('click', () => {
   fbConnectMc(key);
   fbConnectMcCombo(key);
   fbConnectMini(key);
-  fbWriteMcComboResult(computeP4McCombo());
+  if (p4State.mc.thunder !== null && p4State.mc.blizzard !== null) {
+    fbWriteMcComboResult(computeP4McCombo());
+  }
 });
 document.getElementById('btnP4RoomClear').addEventListener('click', () => {
   localStorage.removeItem(LS_ROOMKEY);
@@ -2242,8 +2244,7 @@ document.getElementById('btnP4Clear').addEventListener('click', () => {
   p4gcRenderTf();
   p4State.t1  = { isHonoo: true, true: true };
   p4State.t2  = { true: true };
-  p4State.mc  = { thunder: true, blizzard: true };
-  p4McComboRevealed = false;
+  p4State.mc  = { thunder: null, blizzard: null };
   p4RenderAll();
   if (localStorage.getItem(LS_ROOMKEY)) {
     fbWriteResult(null);
