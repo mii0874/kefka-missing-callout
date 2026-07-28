@@ -458,6 +458,15 @@
   .p4-btn-star  { background: #3a7acd; color: #fff; }
   .p4-btn-clear { background: #2a3a4a; color: #aaa; }
 
+  .p4-timing-row { display: flex; gap: 6px; align-items: center; }
+  .p4-timing-row .p4-act { flex: none; padding: 6px 8px; white-space: nowrap; }
+  #p4TimingOffsetInput {
+    flex: 1; min-width: 0;
+    background: #0f1a26; color: #c8d8e8;
+    border: 1px solid #3a5a7a; border-radius: 4px;
+    padding: 5px 6px; font-size: 0.78rem; text-align: center;
+  }
+
   .p4-result-wrap { position: relative; }
   .p4-popout-btn {
     position: absolute;
@@ -473,7 +482,7 @@
     color: #aac8e8;
     border-radius: 5px;
   }
-  .p4-popout-btn.active { background: #3a7acd; color: #fff; }
+  .p4-popout-btn.active { display: none; }
   .p4-result {
     background: #0f1a26;
     border: 1px solid #2a4a6a;
@@ -664,6 +673,12 @@
   <div class="p4-float-header">
     <label>P4 判定</label>
     <button id="btnP4Close">×</button>
+  </div>
+
+  <div class="p4-timing-row">
+    <button id="btnExdeathExit" class="p4-act p4-btn-star" title="732.1との差分をP4以降の全イベントから引く">エクスデス退場</button>
+    <input id="p4TimingOffsetInput" type="text" inputmode="decimal" placeholder="0.0" />
+    <button id="btnP4TimingApply" class="p4-act p4-btn-clear" title="テキストボックスの値をデフォルトから引いて反映">反映</button>
   </div>
 
   <div class="p4-collapse" id="p4SecGc">
@@ -939,6 +954,34 @@ STRUCTURE.forEach((phase, pi) => {
     });
   });
 });
+
+// =====================
+// P4以降 時間調整（P3終了までのDPSでP4開始タイミングがずれるための補正）
+// =====================
+const P4_TIMING_ADJUSTABLE_PHASES = ['P4', 'P5'];
+const P4_TIMING_BASELINE = 732.1; // エクスデス退場のデフォルト想定タイミング
+let p4TimeOffset = 0;
+
+STRUCTURE.forEach(phase => {
+  if (!P4_TIMING_ADJUSTABLE_PHASES.includes(phase.label)) return;
+  phase.sections.forEach(sec => {
+    if (typeof sec.at === 'number') sec.defaultAt = sec.at;
+    sec.events.forEach(ev => { ev.defaultAt = ev.at; });
+  });
+});
+
+function applyP4TimeOffset(offset) {
+  p4TimeOffset = offset;
+  STRUCTURE.forEach(phase => {
+    if (!P4_TIMING_ADJUSTABLE_PHASES.includes(phase.label)) return;
+    phase.sections.forEach(sec => {
+      if (typeof sec.defaultAt === 'number') sec.at = sec.defaultAt - offset;
+      sec.events.forEach(ev => { ev.at = ev.defaultAt - offset; });
+    });
+  });
+  buildList();
+  recompileActive();
+}
 
 // =====================
 // LocalStorage
@@ -1720,6 +1763,13 @@ const p4MiniPopoutCtrl = p4CreatePopoutController({
 });
 document.getElementById('btnP4MiniPopOut').addEventListener('click', p4MiniPopoutCtrl.open);
 
+// ページ読み込み時、両方のポップアウト先を自動で別ウィンドウ表示にする
+// （ブラウザのポップアップブロックに引っかかる場合は何も起きず、ボタンから手動で開く形になる）
+window.addEventListener('load', () => {
+  p4McComboPopoutCtrl.open();
+  p4MiniPopoutCtrl.open();
+});
+
 const P4_CIRCLED = ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 
 function computeP4Steps() {
@@ -2084,6 +2134,17 @@ document.getElementById('btnP4Toggle').addEventListener('click', () => {
 document.getElementById('btnP4Close').addEventListener('click', () => {
   document.getElementById('p4Float').classList.add('hidden');
   syncPanelPositions();
+});
+
+document.getElementById('btnExdeathExit').addEventListener('click', () => {
+  const diff = Math.round((P4_TIMING_BASELINE - elapsed) * 10) / 10;
+  document.getElementById('p4TimingOffsetInput').value = diff.toFixed(1);
+  applyP4TimeOffset(diff);
+});
+document.getElementById('btnP4TimingApply').addEventListener('click', () => {
+  const val = parseFloat(document.getElementById('p4TimingOffsetInput').value);
+  if (Number.isNaN(val)) return;
+  applyP4TimeOffset(val);
 });
 
 // =====================
