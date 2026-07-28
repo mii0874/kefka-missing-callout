@@ -565,7 +565,15 @@
     border: 1px solid #3a5a7a; border-radius: 4px;
     padding: 4px 6px; font-size: 0.72rem; min-width: 0;
   }
-  .p4-room-status { font-size: 0.68rem; margin-top: 4px; color: #5a7a9a; }
+  .p4-room-status {
+    font-size: 0.68rem;
+    color: #5a7a9a;
+    flex-shrink: 0;
+    width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .p4-room-status.connected { color: #60c0a0; }
   .p4-room-status.error { color: #e87060; }
 
@@ -666,8 +674,8 @@
       <input id="p4RoomKeyInput" type="text" placeholder="ルームキー" autocomplete="off" />
       <button id="btnP4RoomSet" class="p4-act p4-btn-star" style="flex:none;padding:4px 8px;font-size:0.72rem;">セット</button>
       <button id="btnP4RoomClear" class="p4-act p4-btn-clear" style="flex:none;padding:4px 8px;font-size:0.72rem;">解除</button>
+      <div id="p4RoomStatus" class="p4-room-status"></div>
     </div>
-    <div id="p4RoomStatus" class="p4-room-status"></div>
   </div>
   <p class="file-stamp" id="fileStamp"></p>
 </div>
