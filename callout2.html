@@ -75,6 +75,7 @@
     font-size: 0.95rem;
   }
   button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
   #btnStart {
     flex: 3;
     background: #2878d0;
@@ -221,14 +222,21 @@
   .p4mini-gaze .eye svg { width: 100%; height: 100%; display: block; }
   .p4mini-gaze.active .eye { filter: none; opacity: 1; }
 
+  .footer-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-top: 1px solid #2a4a6a;
+    flex-shrink: 0;
+  }
   .file-stamp {
     font-size: 0.7rem;
     color: #3a5a7a;
     text-align: right;
-    width: 100%;
-    max-width: 600px;
-    padding: 2px 2px 2px;
+    white-space: nowrap;
     flex-shrink: 0;
+    padding: 2px 2px 2px;
   }
 
   /* ── スクロールリスト ── */
@@ -550,7 +558,7 @@
   }
 
   /* ルームキーエリア */
-  .p4-room-area { border-top: 1px solid #2a4a6a; padding-top: 8px; }
+  .p4-room-area { flex: 1; min-width: 0; }
   .p4-room-row { display: flex; gap: 4px; align-items: center; }
   .p4-room-row input {
     flex: 1; background: #0f1a26; color: #c8d8e8;
@@ -652,7 +660,17 @@
   <div class="event-list-scroll" id="eventList"></div>
 </div>
 
-<p class="file-stamp" id="fileStamp"></p>
+<div class="footer-bar">
+  <div class="p4-room-area">
+    <div class="p4-room-row">
+      <input id="p4RoomKeyInput" type="text" placeholder="ルームキー" autocomplete="off" />
+      <button id="btnP4RoomSet" class="p4-act p4-btn-star" style="flex:none;padding:4px 8px;font-size:0.72rem;">セット</button>
+      <button id="btnP4RoomClear" class="p4-act p4-btn-clear" style="flex:none;padding:4px 8px;font-size:0.72rem;">解除</button>
+    </div>
+    <div id="p4RoomStatus" class="p4-room-status"></div>
+  </div>
+  <p class="file-stamp" id="fileStamp"></p>
+</div>
 
 <!-- 時間記録パネル（デフォルト非表示） -->
 <div class="record-float hidden" id="recordFloat">
@@ -762,21 +780,22 @@
       </div>
     </div>
   </div>
-
-  <div class="p4-room-area">
-    <div class="p4-room-row">
-      <input id="p4RoomKeyInput" type="text" placeholder="ルームキー" autocomplete="off" />
-      <button id="btnP4RoomSet" class="p4-act p4-btn-star" style="flex:none;padding:4px 8px;font-size:0.72rem;">セット</button>
-      <button id="btnP4RoomClear" class="p4-act p4-btn-clear" style="flex:none;padding:4px 8px;font-size:0.72rem;">解除</button>
-    </div>
-    <div id="p4RoomStatus" class="p4-room-status"></div>
-  </div>
 </div>
 
 <script>
 // 本番ドメイン以外（ローカルファイル実行など）では透かしを表示
 if (location.hostname !== 'mii0874.github.io') {
   document.body.classList.add('dev-mode-bg');
+}
+
+// ?mode=j が付いていれば現状版（フル機能）、無ければ簡略版
+const IS_FULL_MODE = new URLSearchParams(location.search).get('mode') === 'j';
+
+// 簡略版: P4判定ボタンを無効化、P4ミニ表示バーを非表示
+if (!IS_FULL_MODE) {
+  document.getElementById('btnP4Toggle').disabled = true;
+  const p4MiniWrap = document.querySelector('.p4-mini2-wrap');
+  if (p4MiniWrap) p4MiniWrap.style.display = 'none';
 }
 
 // =====================
@@ -873,7 +892,7 @@ const STRUCTURE = [
           { at: 685.8,  label: 'ボクチン注意' },
           { at: 694.2,   label: '中央集合からのペア範囲捨て' },
           { at: 711.0,  label: 'ブリザガこおりつき注意' },
-          { at: 716.0,  label: 'カオス殴る' },
+          { at: 715.1,  label: '突しゅつ★' },
         ]
       }
     ]
@@ -885,20 +904,22 @@ const STRUCTURE = [
         label: '開幕', at: 740,
         events: [
           { at: 744.9,  label: 'おちょくりソウル★' },
-          { at: 786.6,  label: 'アタック {{⓪}}' },
+          { at: 786.6,  label: 'アタック {{⓪}}', mode: 'j'  },
           { at: 789.0,  label: '黄色反対' },
           { at: 793.5,  label: 'ビームみる' },
-          { at: 799.2,  label: 'この後{{①}}' },         //①水雷
-          { at: 806.3,  label: '加速度、{{②}}' }, //②加速度担当
-          { at: 809.6,  label: '{{③}}、{{④}}' }, //③視線担当か　④見る/みない
+          { at: 799.2,  label: 'この後{{①}}', mode: 'j' },         //①水雷
+          { at: 806.3,  label: '加速度、{{②}}', mode: 'j' }, //②加速度担当
+          { at: 809.6,  label: '{{③}}', mode: 'j'  }, //③視線担当か
+          { at: 810.6,  label: '{{④}}' }, //④見る/みない
           { at: 814.6,  label: 'サンダガ覚える' },
           { at: 820.6,  label: '真ん中集合アルファ見る'},
           { at: 821.0,  label: '{{⑤}}' },         //⑤円範囲/ドーナツ
-          { at: 823.0,  label: 'この後{{⑥}}' },         //⑥水雷
-          { at: 830.8,  label: '加速度、{{⑦}}' }, //⑦加速度担当
+          { at: 823.0,  label: 'この後{{⑥}}', mode: 'j'  },         //⑥水雷
+          { at: 830.8,  label: '加速度、{{⑦}}', mode: 'j'  }, //⑦加速度担当
           { at: 833.3,  label: 'ブリザガ覚える'},
-          { at: 835.4,  label: '{{⑧}}、{{⑨}}' }, //⑧視線担当か　⑨見る/みない
-          { at: 839.0,  label: 'チャージ、{{mc}}' },
+          { at: 835.4,  label: '{{⑧}}', mode: 'j'   }, //⑧視線担当か
+          { at: 836.4,  label: '{{⑨}}' }, //⑨見る/みない
+          //{ at: 839.0,  label: 'チャージ確認、{{mc}}', mode: 'j'   },
           { at: 843.0,  label: '真ん中集合、 {{⑩}}' }, //⑩円範囲/ドーナツ
           { at: 862.0,  label: 'アルテマ' },
         ]
@@ -1024,6 +1045,7 @@ let activeEvents = [];
 function recompileActive() {
   activeEvents = allEvents()
     .filter(ev => isChecked(ev.id))
+    .filter(ev => !ev.mode || (ev.mode === 'j' && IS_FULL_MODE))
     .sort((a, b) => a.at - b.at)
     .map(ev => ({ ...ev }));
 }
@@ -1054,6 +1076,7 @@ function buildList() {
       }
 
       for (const ev of sec.events) {
+        if (ev.mode === 'j' && !IS_FULL_MODE) continue; // 簡略版では存在ごと非表示
         const evBlock = document.createElement('div');
         evBlock.className = 'event-block';
         const evRow = makeRow('event-row', ev.id, ev.label, ev.at);
@@ -1767,7 +1790,7 @@ document.getElementById('btnP4MiniPopOut').addEventListener('click', p4MiniPopou
 // （ブラウザのポップアップブロックに引っかかる場合は何も起きず、ボタンから手動で開く形になる）
 window.addEventListener('load', () => {
   p4McComboPopoutCtrl.open();
-  p4MiniPopoutCtrl.open();
+  if (IS_FULL_MODE) p4MiniPopoutCtrl.open();
 });
 
 const P4_CIRCLED = ['⓪','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
@@ -2140,11 +2163,13 @@ document.getElementById('btnExdeathExit').addEventListener('click', () => {
   const diff = Math.round((P4_TIMING_BASELINE - elapsed) * 10) / 10;
   document.getElementById('p4TimingOffsetInput').value = diff.toFixed(1);
   applyP4TimeOffset(diff);
+  if (localStorage.getItem(LS_ROOMKEY)) fbWriteTimeOffset(diff);
 });
 document.getElementById('btnP4TimingApply').addEventListener('click', () => {
   const val = parseFloat(document.getElementById('p4TimingOffsetInput').value);
   if (Number.isNaN(val)) return;
   applyP4TimeOffset(val);
+  if (localStorage.getItem(LS_ROOMKEY)) fbWriteTimeOffset(val);
 });
 
 // =====================
@@ -2234,6 +2259,27 @@ function fbWriteMiniResult(result) {
   fbDb.ref(`rooms/${roomKey}/p4miniresult`).set(result);
 }
 
+let fbTimeOffsetListener = null;
+
+function fbConnectTimeOffset(roomKey) {
+  if (fbTimeOffsetListener) fbTimeOffsetListener.off();
+  const ref = fbDb.ref(`rooms/${roomKey}/p4timeoffset`);
+  fbTimeOffsetListener = ref;
+  ref.on('value', snap => {
+    const val = snap.val();
+    if (typeof val !== 'number') return;
+    applyP4TimeOffset(val);
+    const input = document.getElementById('p4TimingOffsetInput');
+    if (input) input.value = val.toFixed(1);
+  });
+}
+
+function fbWriteTimeOffset(offset) {
+  const roomKey = localStorage.getItem(LS_ROOMKEY);
+  if (!roomKey) return;
+  fbDb.ref(`rooms/${roomKey}/p4timeoffset`).set(offset);
+}
+
 function fbConnect(roomKey) {
   if (fbListener) fbListener.off();
   const ref = fbDb.ref(`rooms/${roomKey}/p4result`);
@@ -2251,6 +2297,7 @@ function fbDisconnect() {
   if (fbMcListener) { fbMcListener.off(); fbMcListener = null; }
   if (fbMcComboListener) { fbMcComboListener.off(); fbMcComboListener = null; }
   if (fbMiniListener) { fbMiniListener.off(); fbMiniListener = null; }
+  if (fbTimeOffsetListener) { fbTimeOffsetListener.off(); fbTimeOffsetListener = null; }
   setRoomStatus('', '');
 }
 
@@ -2275,6 +2322,7 @@ function setRoomStatus(msg, cls) {
     fbConnectMc(saved);
     fbConnectMcCombo(saved);
     fbConnectMini(saved);
+    fbConnectTimeOffset(saved);
   }
 })();
 
@@ -2286,6 +2334,7 @@ document.getElementById('btnP4RoomSet').addEventListener('click', () => {
   fbConnectMc(key);
   fbConnectMcCombo(key);
   fbConnectMini(key);
+  fbConnectTimeOffset(key);
   if (p4State.mc.thunder !== null && p4State.mc.blizzard !== null) {
     fbWriteMcComboResult(computeP4McCombo());
   }
@@ -2327,11 +2376,14 @@ document.getElementById('btnP4Clear').addEventListener('click', () => {
   p4State.t2  = { true: true };
   p4State.mc  = { thunder: null, blizzard: null };
   p4RenderAll();
+  document.getElementById('p4TimingOffsetInput').value = '0.0';
+  applyP4TimeOffset(0);
   if (localStorage.getItem(LS_ROOMKEY)) {
     fbWriteResult(null);
     fbWriteMcResult(null);
     fbWriteMiniResult(null);
     fbWriteMcComboResult(null);
+    fbWriteTimeOffset(0);
   } else {
     p4ShowResultFromData(null);
     p4ShowMcResultFromData(null);
