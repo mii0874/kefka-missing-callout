@@ -240,6 +240,7 @@
   .proc-line { font-size: 0.68rem; color: #9ac0e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .proc-text { font-size: 0.8rem; font-weight: bold; color: #ffffaa; line-height: 1.25; }
   .proc-text.pending { color: #4a5a6a; font-weight: normal; }
+  .proc-text.proc-text-duty { color: #ff7a4a; }
   .proc-item.filled { border-color: #3a6a5a; }
 
   .note { font-size: 0.64rem; color: #3a5a7a; text-align: right; flex-shrink: 0; }
@@ -464,9 +465,9 @@ const PROC_DEFS = [
   { no: 9,  stage: 'island', title: '⑤の内容でニア・ファー処理',
     compute: () => {
       if (!state.g5) return null;
-      if (state.g5 === 'dark') return ['ニア（数字マーカー外側角）'];
-      if (state.g5 === 'wind') return ['ファー（タゲサの南端）'];
-      return ['ファー誘導（島の最北に立つ）'];
+      if (state.g5 === 'dark') return ['ニア（数字マーカー角）'];
+      if (state.g5 === 'wind') return ['ファー担当（タゲサの南）'];
+      return ['ファー誘導（島の北側）'];
     } },
   { no: 10, stage: 'real',   title: '頭割り（①の順番で担当箇所決定）',
     compute: () => { const d = G1.find(x => x.key === state.g1); return d ? [d.main] : null; } },
@@ -521,7 +522,7 @@ function renderProcList() {
       item.classList.add('filled');
       lines.forEach(t => {
         const p = document.createElement('div');
-        p.className = 'proc-text';
+        p.className = 'proc-text' + (t.startsWith('円範囲★担当') ? ' proc-text-duty' : '');
         p.textContent = t;
         body.appendChild(p);
       });
