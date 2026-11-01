@@ -430,16 +430,27 @@ const PROC_DEFS = [
     compute: () => ['B島へ移動'] },
   { no: 5,  stage: 'island', title: '光の攻撃をみて自分の島を確定',
     compute: () => { const d = G5.find(x => x.key === state.g5); return d ? [d.main] : null; } },
-  { no: 6,  stage: 'real',   title: '自分は左右どちら・開始順・範囲捨て担当',
+  { no: 6,  stage: 'real',   title: '頭割り・範囲よけの実行順',
     compute: () => {
       if (!state.g2) return null;
       const d = G2[state.g2];
-      const side = d.atama === '4' ? '左' : '右';
-      const line1 = `頭割り：${side}（${d.atama}マーカー）`;
-      const line2 = state.g4 ? (state.g4 === 'atama' ? '頭割りから' : '円範囲から') : '未確定(④待ち)';
-      const suteRound = d.sute ? d.sute.split('/')[0].trim() : null;
-      const line3 = suteRound ? `範囲捨て担当：あり（${suteRound}）` : '範囲捨て担当：なし';
-      return [line1, line2, line3];
+      const hsLine = `頭割り：${d.atama}マーカー`;
+      let dutyRound = null, dutyMarker = null;
+      if (d.sute) {
+        const [r, m] = d.sute.split('/');
+        dutyRound = parseInt(r.trim(), 10);
+        dutyMarker = m.trim();
+      }
+      const rangeLine = (round) => round === dutyRound
+        ? `円範囲★担当：${dutyMarker}マーカー`
+        : '範囲避け：Cマーカー';
+      if (!state.g4) return [hsLine, '④待ち（開始順未確定）'];
+      const order = state.g4 === 'atama' ? ['hs', 'range'] : ['range', 'hs'];
+      const lines = [];
+      for (let round = 1; round <= 2; round++) {
+        for (const step of order) lines.push(step === 'hs' ? hsLine : rangeLine(round));
+      }
+      return lines;
     } },
   { no: 7,  stage: 'real',   title: 'B島へ移動',
     compute: () => ['B島へ移動'] },
