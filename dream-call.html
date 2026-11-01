@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アルカディアンドリーム コールツール</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #0f1a26;
+    color: #c8d8e8;
+    font-family: 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px;
+    gap: 6px;
+    overflow: hidden;
+  }
+  h1 { font-size: 0.92rem; color: #7aa8d4; letter-spacing: 0.02em; flex-shrink: 0; }
+  h2 { font-size: 0.66rem; color: #ffffaa; letter-spacing: 0.01em; display: flex; align-items: center; gap: 4px; }
+  h3 { font-size: 0.72rem; color: #7aa8d4; letter-spacing: 0.02em; }
+  .step-no {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px; height: 15px;
+    border-radius: 50%;
+    background: #1e3d5a;
+    color: #aac8e8;
+    font-size: 0.6rem;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+
+  /* ===== 全体2カラムレイアウト ===== */
+  .layout {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+    min-height: 0;
+  }
+  .col-input {
+    flex: 1.05;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  .col-process {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .panel {
+    background: #131f2e;
+    border: 1px solid #2a4a6a;
+    border-radius: 6px;
+    padding: 5px 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  /* ===== 汎用ボタン行 ===== */
+  .btn-row { display: flex; gap: 5px; }
+  button.opt {
+    flex: 1;
+    padding: 5px 3px;
+    border: 1px solid #3a5a7a;
+    border-radius: 5px;
+    background: #182635;
+    color: #aac8e8;
+    font-size: 0.68rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+  button.opt:hover { opacity: 0.85; }
+  button.opt.on { background: #3a7acd; color: #fff; border-color: #5b91ff; }
+
+  /* ===== 幻影位置ダイヤモンド（横にコンパクト配置） ===== */
+  .diamond-row { display: flex; align-items: center; gap: 8px; }
+  .diamond-wrap { display: flex; justify-content: center; flex-shrink: 0; }
+  .diamond {
+    display: grid;
+    grid-template-columns: repeat(3, 34px);
+    grid-template-rows: repeat(3, 34px);
+    gap: 3px;
+  }
+  .dpos {
+    position: relative;
+    border-radius: 50%;
+    border: 2px solid var(--mc, #3a5a7a);
+    background: #182635;
+    color: var(--mc, #c8d8e8);
+    font-size: 0.78rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
+  }
+  .dpos:hover { opacity: 0.85; }
+  .dpos.on-dark  { background: var(--mc, #3a7acd); color: #fff; }
+  .dpos.on-light { background: var(--mcl, #243a52); color: var(--mc, #c8d8e8); }
+  .dpos .ticon {
+    position: absolute;
+    bottom: -4px; right: -4px;
+    width: 12px; height: 12px;
+    background: #0f1a26;
+    border-radius: 50%;
+  }
+  .dpos .ticon svg { width: 100%; height: 100%; display: block; }
+  .dpos-center { display: flex; align-items: center; justify-content: center; }
+  .p-A { grid-area: 1 / 2 / 2 / 3; }
+  .p-1 { grid-area: 1 / 1 / 2 / 2; }
+  .p-2 { grid-area: 1 / 3 / 2 / 4; }
+  .p-D { grid-area: 2 / 1 / 3 / 2; }
+  .p-center { grid-area: 2 / 2 / 3 / 3; }
+  .p-B { grid-area: 2 / 3 / 3 / 4; }
+  .p-4 { grid-area: 3 / 1 / 4 / 2; }
+  .p-C { grid-area: 3 / 2 / 4 / 3; }
+  .p-3 { grid-area: 3 / 3 / 4 / 4; }
+
+  .legend { display: flex; flex-direction: column; gap: 3px; font-size: 0.56rem; color: #7a9ab4; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .legend .licon { width: 11px; height: 11px; flex-shrink: 0; }
+  .legend .licon svg { width: 100%; height: 100%; display: block; }
+
+  /* ===== 属性ボタン(炎/風/闇/土) ===== */
+  button.elem {
+    flex: 1;
+    padding: 5px 2px;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    font-weight: bold;
+    cursor: pointer;
+    border: 2px solid transparent;
+    color: #fff;
+    transition: opacity 0.15s;
+    opacity: 0.55;
+  }
+  button.elem:hover { opacity: 0.8; }
+  button.elem.on { opacity: 1; border-color: #fff; }
+  .elem-fire  { background: #c0432a; }
+  .elem-wind  { background: #3a9a4a; }
+  .elem-dark  { background: #7a3ac0; }
+  .elem-earth { background: #c0a02a; }
+
+  /* ===== ⑥ 分身の行方（北・真ん中・南、縦並び） ===== */
+  .clone-cols { display: flex; flex-direction: column; gap: 3px; }
+  .clone-col {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    background: #182635;
+    border-radius: 5px;
+    padding: 3px 6px;
+  }
+  .clone-col .ccname { font-size: 0.64rem; font-weight: bold; color: #aac8e8; min-width: 32px; }
+  .clone-col .ccfan   { font-size: 0.56rem; color: #5a7a9a; min-width: 34px; }
+  .clone-col .ccboxes { display: flex; gap: 4px; margin-left: auto; }
+  .ccbox {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.6rem;
+    color: #c8d8e8;
+    cursor: pointer;
+    user-select: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .ccbox:hover { background: #1e3d5a; }
+  .ccbox input { width: 11px; height: 11px; accent-color: #5b91ff; cursor: pointer; flex-shrink: 0; }
+  .ccbox.checked { background: #1e3d5a; color: #ffffaa; font-weight: bold; }
+
+  button.clear-all {
+    width: 100%;
+    padding: 6px;
+    border: none;
+    border-radius: 6px;
+    background: #4a2a2a;
+    color: #e8a8a8;
+    font-size: 0.72rem;
+    font-weight: bold;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  button.clear-all:hover { opacity: 0.85; }
+
+  /* ===== 処理チェックリスト ===== */
+  .proc-panel {
+    flex: 1;
+    min-height: 0;
+    background: #10202a;
+    border: 1px solid #2a5a5a;
+    border-radius: 6px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-y: auto;
+  }
+  .proc-item {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    background: #0f1a26;
+    border: 1px solid #1e3448;
+    border-radius: 5px;
+    padding: 3px 6px;
+    flex: 1;
+    min-height: 0;
+  }
+  .proc-num {
+    flex-shrink: 0;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #1e3d5a;
+    color: #aac8e8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; font-weight: bold;
+  }
+  .proc-stage {
+    flex-shrink: 0;
+    font-size: 0.52rem;
+    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+  .proc-stage.real  { background: #1e3d5a; color: #9ac8ff; }
+  .proc-stage.island { background: #1e4a3a; color: #8cf0c0; }
+  .proc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .proc-line { font-size: 0.56rem; color: #5a7a9a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .proc-text { font-size: 0.68rem; font-weight: bold; color: #ffffaa; line-height: 1.25; }
+  .proc-text.pending { color: #4a5a6a; font-weight: normal; }
+  .proc-item.filled { border-color: #3a6a5a; }
+
+  .note { font-size: 0.56rem; color: #3a5a7a; text-align: right; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<h1>アルカディアンドリーム コールツール</h1>
+
+<div class="layout">
+  <div class="col-input">
+    <!-- ① 幻影の出現順 -->
+    <div class="panel">
+      <h2><span class="step-no">1</span>幻影が出た順番が見えたら押す</h2>
+      <div class="btn-row" id="g1-buttons"></div>
+    </div>
+
+    <!-- ② 自分の幻影位置 -->
+    <div class="panel">
+      <h2><span class="step-no">2</span>自分の幻影が出た直後に押す（入替前）</h2>
+      <div class="diamond-row">
+        <div class="diamond-wrap">
+          <div class="diamond" id="g2-diamond"></div>
+        </div>
+        <div class="legend" id="g2-legend"></div>
+      </div>
+    </div>
+
+    <!-- ③ 南北安地 -->
+    <div class="panel">
+      <h2><span class="step-no">3</span>南北安地が決定したら押す</h2>
+      <div class="btn-row" id="g3-buttons"></div>
+    </div>
+
+    <!-- ④ Aの予兆 -->
+    <div class="panel">
+      <h2><span class="step-no">4</span>Aがどっち予兆だったかわかったら押す</h2>
+      <div class="btn-row" id="g4-buttons"></div>
+    </div>
+
+    <!-- ⑤ 自分の島属性 -->
+    <div class="panel">
+      <h2><span class="step-no">5</span>自分の島が確定したら押す</h2>
+      <div class="btn-row" id="g5-buttons"></div>
+    </div>
+
+    <!-- ⑥ 分身の行方（北・真ん中・南、縦並び） -->
+    <div class="panel">
+      <h2><span class="step-no">6</span>分身の行方（北南BH・真ん中の移動先）</h2>
+      <div class="clone-cols">
+        <div class="clone-col">
+          <div class="ccname">北</div>
+          <div class="ccfan" id="cc-north-fan">―</div>
+          <div class="ccboxes"><label class="ccbox" id="cc-north-box"><input type="checkbox" id="cc-north-cb">ブラックホール</label></div>
+        </div>
+        <div class="clone-col">
+          <div class="ccname">真ん中</div>
+          <div class="ccfan">&nbsp;</div>
+          <div class="ccboxes">
+            <label class="ccbox" id="cc-left-box"><input type="checkbox" id="cc-left-cb">←左(D)</label>
+            <label class="ccbox" id="cc-right-box"><input type="checkbox" id="cc-right-cb">→右(B)</label>
+          </div>
+        </div>
+        <div class="clone-col">
+          <div class="ccname">南</div>
+          <div class="ccfan" id="cc-south-fan">―</div>
+          <div class="ccboxes"><label class="ccbox" id="cc-south-box"><input type="checkbox" id="cc-south-cb">ブラックホール</label></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="clear-all" id="btnClearAll">🔄 まとめてクリア</button>
+    <p class="note" id="buildTs"></p>
+  </div>
+
+  <div class="col-process">
+    <h3>処理チェックリスト（わかった順に埋まります）</h3>
+    <div class="proc-panel" id="proc-panel"></div>
+  </div>
+</div>
+
+<script>
+document.getElementById('buildTs').textContent = '最終更新: ' + document.lastModified;
+
+// ============ アイコン（参考用/asset の頭割り・円範囲マーカーを簡略化して流用） ============
+const ICON_STAR = `<svg viewBox="-24 -24 48 48"><circle cx="0" cy="0" r="12" fill="none" stroke="#ffffaa" stroke-width="5"/></svg>`;
+const ICON_SHARE = `<svg viewBox="-24 -24 48 48"><g stroke="#ffffaa" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"><polyline points="-4,-11 0,-5 4,-11"/><polyline points="4,11 0,5 -4,11"/><polyline points="-11,-4 -5,0 -11,4"/><polyline points="11,4 5,0 11,-4"/></g></svg>`;
+
+// ============ 状態 ============
+const state = {
+  g1: null,  // 'x' | 'cross'
+  g2: null,  // 'A'|'1'|'2'|'B'|'D'|'4'|'C'|'3'  （自分の幻影の見た目上の位置＝入替前）
+  g3: null,  // 'northSafe' | 'southSafe'
+  g4: null,  // 'atama' | 'circle'
+  g5: null,  // 'fire'|'wind'|'dark'|'earth'
+  g6: null,  // 'north' | 'south'  (ブラックホールに吸われた側)
+  g7: null,  // 'B' | 'D'          (真ん中の分身が来た島)
+};
+
+// ============ データ定義 ============
+const G1 = [
+  { key: 'cross', label: '十字スタート', main: '頭割り：D' },
+  { key: 'x',     label: 'X字スタート',  main: '頭割り：４' },
+];
+function g1Other(key) { return key === 'x' ? 'cross' : 'x'; }
+
+// 自分の幻影位置(入替前)ごとの最終処理内容。
+// B/1 と C/4 は「入替ペアの枠へ移動してからそちらの内容で処理する」ため、
+// 表示上の位置キーと、実際に使う内容（マクロの中身・マーカー）が入れ替わる。
+const G2_ORDER = ['A', '1', '2', 'D', 'B', '4', 'C', '3'];
+const G2 = {
+  A:   { type: 'star',   typeLabel: '★頭割り',   swap: '2', atama: '3', sute: null,        marker: 'attack4' },
+  '2': { type: 'circle', typeLabel: '●円範囲',   swap: 'A', atama: '3', sute: '1回目 / 2', marker: 'attack1' },
+  B:   { type: 'circle', typeLabel: '●円範囲（[1]へ移動）',   swap: 'D', atama: '4', sute: '2回目 / 1', marker: 'stop2'   },
+  '3': { type: 'sute',   typeLabel: '●範囲捨て', swap: 'B', atama: '3', sute: '2回目 / 2', marker: 'attack2' },
+  C:   { type: 'circle', typeLabel: '●円範囲（[4]へ移動）',   swap: 'C', atama: '4', sute: '1回目 / 1', marker: 'stop1'   },
+  '4': { type: 'star',   typeLabel: '★頭割り（[C]へ移動）',   swap: '4', atama: '4', sute: null,        marker: 'bind1'   },
+  D:   { type: 'star',   typeLabel: '★頭割り',   swap: '1', atama: '4', sute: null,        marker: 'bind2'   },
+  '1': { type: 'star',   typeLabel: '★頭割り（[B]へ移動）',   swap: '3', atama: '3', sute: null,        marker: 'attack3' },
+};
+
+// マーカー色（インゲームのフィールドマーカー色に合わせる）A・1=赤 / B・2=黄 / 3・C=水色 / 4・D=紫
+const MARKER_COLOR = {
+  A: '#e0485a', '1': '#e0485a',
+  B: '#e0c23a', '2': '#e0c23a',
+  '3': '#3ac8e0', C: '#3ac8e0',
+  '4': '#a85be0', D: '#a85be0',
+};
+const MARKER_COLOR_LIGHT = {
+  A: 'rgba(224,72,90,0.3)', '1': 'rgba(224,72,90,0.3)',
+  B: 'rgba(224,194,58,0.3)', '2': 'rgba(224,194,58,0.3)',
+  '3': 'rgba(58,200,224,0.3)', C: 'rgba(58,200,224,0.3)',
+  '4': 'rgba(168,91,224,0.3)', D: 'rgba(168,91,224,0.3)',
+};
+// 1/B/4/C は「入替ペアの枠へ移動」が発生する（他は入替なし＝その場で確定）
+const MOVE_TO = { '1': 'B', B: '1', '4': 'C', C: '4' };
+
+const G3 = [
+  { key: 'northSafe', label: '↑ 12安地（北安地）' },
+  { key: 'southSafe', label: '↓ 34安地（南安地）' },
+];
+// 北/南がそれぞれどの扇を出すか（③で確定）
+function fanOf(dir, g3) {
+  if (!g3) return null;
+  if (g3 === 'northSafe') return dir === 'north' ? '縦扇' : '横扇';
+  return dir === 'north' ? '横扇' : '縦扇';
+}
+function safeLabel(g3) {
+  if (!g3) return null;
+  return g3 === 'northSafe' ? '１・２安地' : '３・４安地';
+}
+function safeLines(g3) {
+  if (!g3) return null;
+  return g3 === 'northSafe' ? ['北　↑', '南　→'] : ['北　→', '南　↑'];
+}
+
+const G4 = [
+  { key: 'atama',  label: '★ 頭割りスタート' },
+  { key: 'circle', label: '● 円範囲スタート' },
+];
+
+const G5 = [
+  { key: 'fire',  label: '炎', cls: 'elem-fire',  main: '炎：移動×' },
+  { key: 'wind',  label: '風', cls: 'elem-wind',  main: '風：ノックアップ　ファー' },
+  { key: 'dark',  label: '闇', cls: 'elem-dark',  main: '闇：ビーム　ニア' },
+  { key: 'earth', label: '土', cls: 'elem-earth', main: '土：タケノコ' },
+];
+
+// ============ 処理チェックリスト定義 ============
+// stage: 'real'(現実) | 'island'(島)
+const PROC_DEFS = [
+  { no: 1,  stage: 'real',   title: '②の結果：入替の有無と入替先',
+    compute: () => {
+      if (!state.g2) return null;
+      const dest = MOVE_TO[state.g2];
+      return dest ? [`入替あり → [${dest}]へ移動`] : ['入替なし（そのまま）'];
+    } },
+  { no: 2,  stage: 'real',   title: '④の結果：Aが円範囲なら誰と入替するか',
+    compute: () => {
+      if (!state.g2 || !state.g4) return null;
+      if (state.g4 === 'atama') return ['なし'];
+      const d = G2[state.g2];
+      return [`入替先：${d.swap}`];
+    } },
+  { no: 3,  stage: 'real',   title: '南北安地で扇・範囲よけ',
+    compute: () => { if (!state.g3) return null; return [safeLabel(state.g3)]; } },
+  { no: 4,  stage: 'real',   title: 'B島へ移動',
+    compute: () => ['B島へ移動'] },
+  { no: 5,  stage: 'island', title: '光の攻撃をみて自分の島を確定',
+    compute: () => { const d = G5.find(x => x.key === state.g5); return d ? [d.main] : null; } },
+  { no: 6,  stage: 'real',   title: '自分は左右どちら・開始順・範囲捨て担当',
+    compute: () => {
+      if (!state.g2) return null;
+      const d = G2[state.g2];
+      const side = d.atama === '4' ? '左' : '右';
+      const line1 = `頭割り：${side}（${d.atama}マーカー）`;
+      const line2 = state.g4 ? (state.g4 === 'atama' ? '頭割りから' : '円範囲から') : '未確定(④待ち)';
+      const suteRound = d.sute ? d.sute.split('/')[0].trim() : null;
+      const line3 = suteRound ? `範囲捨て担当：あり（${suteRound}）` : '範囲捨て担当：なし';
+      return [line1, line2, line3];
+    } },
+  { no: 7,  stage: 'real',   title: 'B島へ移動',
+    compute: () => ['B島へ移動'] },
+  { no: 8,  stage: 'island', title: '⑤の内容で自分の塔を踏む',
+    compute: () => {
+      if (state.g5 === 'dark') return ['ビーム'];
+      if (state.g5 === 'wind') return ['ノックアップ'];
+      const d = G5.find(x => x.key === state.g5);
+      return d ? [d.main] : null;
+    } },
+  { no: 9,  stage: 'island', title: '⑤の内容でニア・ファー処理',
+    compute: () => {
+      if (!state.g5) return null;
+      if (state.g5 === 'dark') return ['ニア（数字マーカー外側角）'];
+      if (state.g5 === 'wind') return ['ファー（タゲサの南端）'];
+      return ['ファー誘導（島の最北に立つ）'];
+    } },
+  { no: 10, stage: 'real',   title: '頭割り（①の順番で担当箇所決定）',
+    compute: () => { const d = G1.find(x => x.key === state.g1); return d ? [d.main] : null; } },
+  { no: 11, stage: 'island', title: '⑥⑦の結果で安置処理',
+    compute: () => {
+      const lines = [];
+      if (state.g6 && state.g7) {
+        const survivorIsland = state.g7 === 'B' ? 'D' : 'B';
+        lines.push(`移動先：${survivorIsland}島`);
+      }
+      if (state.g6 && state.g3) {
+        const survivor = state.g6 === 'north' ? 'south' : 'north';
+        const fan = fanOf(survivor, state.g3);
+        const standDir = fan === '縦扇' ? '横' : '縦';
+        lines.push(`安置：${standDir}向き`);
+      }
+      return lines.length ? lines : null;
+    } },
+  { no: 12, stage: 'real',   title: '頭割り（①と逆の順番が発動）',
+    compute: () => { const d = G1.find(x => x.key === g1Other(state.g1)); return (state.g1 && d) ? [d.main] : null; } },
+  { no: 13, stage: 'real',   title: '⑥で吸われた分身が発動（③の安地へ）',
+    compute: () => { if (!state.g3) return null; return [safeLabel(state.g3)]; } },
+];
+
+// ============ 共通ヘルパー ============
+function markOn(groupSelector, btn) {
+  document.querySelectorAll(groupSelector).forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+}
+
+function renderProcList() {
+  const panel = document.getElementById('proc-panel');
+  panel.innerHTML = '';
+  PROC_DEFS.forEach(def => {
+    const item = document.createElement('div');
+    item.className = 'proc-item';
+    const num = document.createElement('div');
+    num.className = 'proc-num';
+    num.textContent = def.no;
+    const stage = document.createElement('span');
+    stage.className = 'proc-stage ' + (def.stage === 'real' ? 'real' : 'island');
+    stage.textContent = def.stage === 'real' ? '現実' : '島';
+    const body = document.createElement('div');
+    body.className = 'proc-body';
+    const lineLabel = document.createElement('div');
+    lineLabel.className = 'proc-line';
+    lineLabel.textContent = def.title;
+    body.appendChild(lineLabel);
+
+    const lines = def.compute();
+    if (lines) {
+      item.classList.add('filled');
+      lines.forEach(t => {
+        const p = document.createElement('div');
+        p.className = 'proc-text';
+        p.textContent = t;
+        body.appendChild(p);
+      });
+    } else {
+      const p = document.createElement('div');
+      p.className = 'proc-text pending';
+      p.textContent = '未確定';
+      body.appendChild(p);
+    }
+    item.appendChild(num);
+    item.appendChild(stage);
+    item.appendChild(body);
+    panel.appendChild(item);
+  });
+}
+
+// ============ ① 幻影の出現順 ============
+const g1Wrap = document.getElementById('g1-buttons');
+G1.forEach(opt => {
+  const b = document.createElement('button');
+  b.className = 'opt';
+  b.textContent = opt.label;
+  b.addEventListener('click', () => {
+    state.g1 = opt.key;
+    markOn('#g1-buttons .opt', b);
+    renderProcList();
+  });
+  g1Wrap.appendChild(b);
+});
+
+// ============ ② 自分の幻影位置 ============
+const g2Diamond = document.getElementById('g2-diamond');
+G2_ORDER.forEach(key => {
+  const data = G2[key];
+  const b = document.createElement('button');
+  b.className = `dpos p-${key}`;
+  b.style.setProperty('--mc', MARKER_COLOR[key]);
+  b.style.setProperty('--mcl', MARKER_COLOR_LIGHT[key]);
+  b.textContent = key;
+  const icon = document.createElement('span');
+  icon.className = 'ticon';
+  icon.innerHTML = data.type === 'star' ? ICON_STAR : ICON_SHARE;
+  b.appendChild(icon);
+  b.addEventListener('click', () => {
+    state.g2 = key;
+    markG2Selection(key);
+    renderProcList();
+  });
+  g2Diamond.appendChild(b);
+});
+
+// 選択した位置（薄い色）と、入替後に実際に使う位置（濃い色）を描き分ける。
+// 入替がない位置(A/2/3/D)は最初から濃い色のみ。
+function markG2Selection(key) {
+  document.querySelectorAll('#g2-diamond .dpos').forEach(b => b.classList.remove('on-light', 'on-dark'));
+  const dest = MOVE_TO[key];
+  if (dest) {
+    document.querySelector(`#g2-diamond .p-${key}`).classList.add('on-light');
+    document.querySelector(`#g2-diamond .p-${dest}`).classList.add('on-dark');
+  } else {
+    document.querySelector(`#g2-diamond .p-${key}`).classList.add('on-dark');
+  }
+}
+const centerDeco = document.createElement('div');
+centerDeco.className = 'dpos-center p-center';
+g2Diamond.appendChild(centerDeco);
+
+// 凡例（アイコンの意味）
+const legendEl = document.getElementById('g2-legend');
+[['star', ICON_STAR, '頭割り'], ['share', ICON_SHARE, '円範囲／範囲捨て']].forEach(([key, svg, label]) => {
+  const span = document.createElement('span');
+  const ic = document.createElement('span');
+  ic.className = 'licon';
+  ic.innerHTML = svg;
+  span.appendChild(ic);
+  const t = document.createElement('span');
+  t.textContent = label;
+  span.appendChild(t);
+  legendEl.appendChild(span);
+});
+
+// ============ ③ 南北安地 ============
+const g3Wrap = document.getElementById('g3-buttons');
+G3.forEach(opt => {
+  const b = document.createElement('button');
+  b.className = 'opt';
+  b.textContent = opt.label;
+  b.addEventListener('click', () => {
+    state.g3 = opt.key;
+    markOn('#g3-buttons .opt', b);
+    updateCloneFanLabels();
+    renderProcList();
+  });
+  g3Wrap.appendChild(b);
+});
+
+// ============ ④ Aの予兆 ============
+const g4Wrap = document.getElementById('g4-buttons');
+G4.forEach(opt => {
+  const b = document.createElement('button');
+  b.className = 'opt';
+  b.textContent = opt.label;
+  b.addEventListener('click', () => {
+    state.g4 = opt.key;
+    markOn('#g4-buttons .opt', b);
+    renderProcList();
+  });
+  g4Wrap.appendChild(b);
+});
+
+// ============ ⑤ 自分の島属性 ============
+const g5Wrap = document.getElementById('g5-buttons');
+G5.forEach(opt => {
+  const b = document.createElement('button');
+  b.className = `elem ${opt.cls}`;
+  b.textContent = opt.label;
+  b.addEventListener('click', () => {
+    state.g5 = opt.key;
+    markOn('#g5-buttons .elem', b);
+    renderProcList();
+  });
+  g5Wrap.appendChild(b);
+});
+
+// ============ ⑥ 分身の行方 ============
+function updateCloneFanLabels() {
+  document.getElementById('cc-north-fan').textContent = state.g3 ? fanOf('north', state.g3) : '―';
+  document.getElementById('cc-south-fan').textContent = state.g3 ? fanOf('south', state.g3) : '―';
+}
+
+function wireExclusiveCheckbox(cbId, boxId, otherCbId, otherBoxId, onSet) {
+  const cb = document.getElementById(cbId);
+  const box = document.getElementById(boxId);
+  const otherCb = document.getElementById(otherCbId);
+  const otherBox = document.getElementById(otherBoxId);
+  cb.addEventListener('change', () => {
+    box.classList.toggle('checked', cb.checked);
+    if (cb.checked) {
+      otherCb.checked = false;
+      otherBox.classList.remove('checked');
+    }
+    onSet(cb.checked);
+    renderProcList();
+  });
+}
+
+wireExclusiveCheckbox('cc-north-cb', 'cc-north-box', 'cc-south-cb', 'cc-south-box', (on) => { state.g6 = on ? 'north' : (state.g6 === 'north' ? null : state.g6); });
+wireExclusiveCheckbox('cc-south-cb', 'cc-south-box', 'cc-north-cb', 'cc-north-box', (on) => { state.g6 = on ? 'south' : (state.g6 === 'south' ? null : state.g6); });
+wireExclusiveCheckbox('cc-left-cb',  'cc-left-box',  'cc-right-cb', 'cc-right-box', (on) => { state.g7 = on ? 'D' : (state.g7 === 'D' ? null : state.g7); });
+wireExclusiveCheckbox('cc-right-cb', 'cc-right-box', 'cc-left-cb',  'cc-left-box',  (on) => { state.g7 = on ? 'B' : (state.g7 === 'B' ? null : state.g7); });
+
+// ============ まとめてクリア ============
+document.getElementById('btnClearAll').addEventListener('click', () => {
+  Object.keys(state).forEach(k => state[k] = null);
+  document.querySelectorAll('.opt.on, .elem.on').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.dpos.on-light, .dpos.on-dark').forEach(b => b.classList.remove('on-light', 'on-dark'));
+  document.querySelectorAll('.ccbox input').forEach(cb => cb.checked = false);
+  document.querySelectorAll('.ccbox.checked').forEach(b => b.classList.remove('checked'));
+  updateCloneFanLabels();
+  renderProcList();
+});
+
+// ============ 初期描画 ============
+updateCloneFanLabels();
+renderProcList();
+</script>
+</body>
+</html>
